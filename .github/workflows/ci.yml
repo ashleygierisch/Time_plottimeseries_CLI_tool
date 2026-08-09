@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# No token scopes by default; each job asks for exactly what it needs.
+permissions: {}
+
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -13,23 +16,35 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       matrix:
         node-version: [24.x]
     steps:
-    - uses: actions/checkout@v4
+    # Actions are pinned to commit SHAs, not tags: a tag can be moved to point
+    # at new code, and these run with access to the workspace. Dependabot
+    # updates the SHAs and records the version in the trailing comment.
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        # This job never pushes, so don't leave a credential in .git/config
+        # where any build step could pick it up.
+        persist-credentials: false
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: npm ci --verbose
-    - run: npm run lint
-    - run: npm run typecheck
-    - run: npm test
-    - run: mkdir -p pages-public/img && npm run build public/data.csv > pages-public/index.html && cp public/plottimeseries-screen-shot.png pages-public/img/
+    # Install scripts are arbitrary code from every package in the tree, run
+    # before anything has been audited. Nothing here needs them.
+    - run: npm ci --ignore-scripts --verbose
+
+    # Audits, then lints, typechecks, tests and builds the site with no network
+    # egress. See scripts/validate.ts. Produces pages-public/.
+    - run: npm run validate
+
     - name: Upload artifact
-      uses: actions/upload-pages-artifact@v3
+      uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
       with:
         path: pages-public
 
@@ -48,17 +63,21 @@ jobs:
           target: windows-x64
           suffix: '.exe'
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     env:
       EXE: plottimeseries${{ matrix.suffix }}
       COMPILED: plottimeseries-compiled${{ matrix.suffix }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
     - name: Use Node.js 24.x
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
       with:
         node-version: 24.x
         cache: 'npm'
-    - run: npm ci
+    - run: npm ci --ignore-scripts
     - run: npm run build:standalone
     - name: Smoke test the standalone build
       shell: bash
@@ -81,14 +100,18 @@ jobs:
           files="$files $COMPILED"
         fi
         tar -czf "release/plottimeseries-${{ matrix.target }}.tar.gz" -C dist $files
+    # The artifact actions stay on v4 rather than jumping to the current major
+    # with the rest: this release flow is new, and `merge-multiple` below is the
+    # kind of input that moves between majors. Dependabot will propose the bump
+    # with its changelog attached, which is a better place to weigh it.
     - name: Upload the standalone executable
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: plottimeseries-${{ matrix.target }}
         path: release/plottimeseries-${{ matrix.target }}.tar.gz
     - name: Upload the single file script
       if: matrix.target == 'linux-x64'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: plottimeseries-script
         path: dist/plottimeseries.cjs
@@ -100,8 +123,12 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/download-artifact@v4
+    # `gh` authenticates from GH_TOKEN below, so the checkout is only here for
+    # the repository context and does not need a credential of its own.
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
       with:
         path: release
         pattern: plottimeseries-*
@@ -132,10 +159,7 @@ jobs:
       id-token: write
     needs: build
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [24.x]
     steps:
     - name: Deploy to GitHub Pages
       id: deployment
-      uses: actions/deploy-pages@v4
+      uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0

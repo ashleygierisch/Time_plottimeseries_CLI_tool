@@ -117,14 +117,53 @@ Do whatever is in `.github/workflows/ci.yml`, but roughly:
 2. `npm run dev`
 3. Open `http://localhost:3000` in a web browser
 
-To validate changes:
+To validate changes, run `npm run validate`. That is the whole of CI in one
+command: `npm audit`, then lint, typecheck, test and a build of `pages-public/`,
+followed by some smoke checks on the result.
 
-1. `npm run lint`
-2. `npm run typecheck`
-3. `npm run test`
-4. `mkdir -p pages-public && npm run build public/data.csv > pages-public/index.html`
-5. `npm run build:standalone`
-6. `./dist/plottimeseries public/data.csv > /dev/null && ./dist/plottimeseries-compiled public/data.csv > /dev/null`
+Everything after the audit runs inside a network namespace with no egress
+(`unshare --net`), so a compromised dependency cannot exfiltrate anything while
+executing as part of a lint or a test. The sandbox is verified rather than
+assumed — the run fails if a test connection succeeds. Without `unshare`
+available, `npm run validate` warns and continues with the network up; in CI it
+fails instead.
+
+The standalone artifacts are built separately, since scriptc and the single
+executable application need a toolchain rather than a sandbox:
+
+1. `npm run build:standalone`
+2. `./dist/plottimeseries public/data.csv > /dev/null && ./dist/plottimeseries-compiled public/data.csv > /dev/null`
+
+## Security
+
+The generated report is a single self-contained HTML file with the CSV, styles
+and bundle inlined, so it can be locked down tightly:
+
+- **Content-Security-Policy**, generated in `scripts/securityHeaders.ts` and
+  emitted as a `<meta>` tag by `scripts/report.ts`. It is `default-src 'none'`
+  plus a sha256 hash for each inline `<script>` and `<style>`, so nothing runs
+  but the exact bundle that was built. `npm run validate` recomputes the hashes
+  from the built page and fails if they and the policy have drifted apart.
+  Because it sits in `renderReport`, every artifact emits it — `npm run build`,
+  the `.cjs`, the executable and the compiled binary still print the same bytes.
+  It stays inside the scriptc subset for that reason: `node:crypto`'s sha256
+  compiles statically, so the binary needs no JavaScript engine to produce it.
+- **No `unsafe-eval`.** CSV parsing uses `d3.csvParseRows` rather than
+  `d3.csvParse`, because the latter compiles a row-to-object function with
+  `new Function` out of the column names — which, for this app, can come from
+  the `?csv=` query parameter.
+- **`_headers`**, written next to the site by `--headers-file`. GitHub Pages
+  ignores it — it is the Cloudflare Pages / Netlify convention — but it is the
+  only way to deliver `frame-ancestors`, `X-Frame-Options` and
+  `X-Content-Type-Options`, so it is generated for the day the site moves to a
+  host that reads it.
+- **Framing.** Since GitHub Pages cannot send `X-Frame-Options` and a `<meta>`
+  CSP ignores `frame-ancestors`, the app refuses to render when it is not the
+  top window (`src/frameGuard.ts`). That check travels with the file, so it also
+  applies to a report opened from disk.
+- **CI** requests no token scopes by default, pins actions to commit SHAs,
+  checks out without persisting credentials, and installs with
+  `--ignore-scripts`.
 
 ## Background
 

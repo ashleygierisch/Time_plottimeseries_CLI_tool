@@ -6,14 +6,17 @@ export function usage(programName: string): string {
 Reads the CSV from stdin when no file is given.
 
 Options:
-  --y-max <number>  Pin the top of the y scale
-  --y-min <number>  Pin the bottom of the y scale
-  -h, --help        Show this message`;
+  --y-max <number>       Pin the top of the y scale
+  --y-min <number>       Pin the bottom of the y scale
+  --headers-file <path>  Also write a Cloudflare/Netlify _headers file carrying
+                         the same security policy as the report's <meta> CSP
+  -h, --help             Show this message`;
 }
 
 export interface CLIOptions {
   csvPath: string | null;
   chartOptions: ChartOptions;
+  headersFile: string | null;
   help: boolean;
   error: string | null;
 }
@@ -42,6 +45,7 @@ function invalid(name: string, value: string | null): string {
 export function parseArgs(args: string[]): CLIOptions {
   const chartOptions: ChartOptions = {};
   let csvPath: string | null = null;
+  let headersFile: string | null = null;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -54,7 +58,7 @@ export function parseArgs(args: string[]): CLIOptions {
     const option = splitOption(arg);
 
     if (option.name === '-h' || option.name === '--help') {
-      return { csvPath, chartOptions, help: true, error: null };
+      return { csvPath, chartOptions, headersFile, help: true, error: null };
     }
 
     let value = option.value;
@@ -63,18 +67,29 @@ export function parseArgs(args: string[]): CLIOptions {
       value = args[i];
     }
 
+    if (option.name === '--headers-file') {
+      if (value == null || value.trim() === '') {
+        return {
+          csvPath, chartOptions, headersFile, help: false,
+          error: `--headers-file expects a path`,
+        };
+      }
+      headersFile = value;
+      continue;
+    }
+
     const parsed = parseNumber(value);
 
     if (option.name === '--y-max') {
-      if (parsed == null) return { csvPath, chartOptions, help: false, error: invalid('--y-max', value) };
+      if (parsed == null) return { csvPath, chartOptions, headersFile, help: false, error: invalid('--y-max', value) };
       chartOptions.yMax = parsed;
     } else if (option.name === '--y-min') {
-      if (parsed == null) return { csvPath, chartOptions, help: false, error: invalid('--y-min', value) };
+      if (parsed == null) return { csvPath, chartOptions, headersFile, help: false, error: invalid('--y-min', value) };
       chartOptions.yMin = parsed;
     } else {
-      return { csvPath, chartOptions, help: false, error: `unknown option: ${option.name}` };
+      return { csvPath, chartOptions, headersFile, help: false, error: `unknown option: ${option.name}` };
     }
   }
 
-  return { csvPath, chartOptions, help: false, error: null };
+  return { csvPath, chartOptions, headersFile, help: false, error: null };
 }

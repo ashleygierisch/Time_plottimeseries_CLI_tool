@@ -7,8 +7,9 @@
     "dev": "node scripts/dev.ts",
     "build": "node scripts/plot-csv.ts",
     "build:standalone": "node scripts/build-standalone.ts",
-    "lint": "eslint src scripts",
-    "typecheck": "tsc --noEmit -p src/tsconfig.json -p scripts/tsconfig.json",
+    "validate": "node scripts/validate.ts",
+    "lint": "eslint src scripts --max-warnings=0",
+    "typecheck": "tsc --noEmit -p src/tsconfig.json && tsc --noEmit -p scripts/tsconfig.json",
     "test": "tsx --test 'src/**/*.test.ts' 'src/**/*.test.tsx' 'scripts/**/*.test.ts'",
     "test:update-snapshots": "UPDATE_SNAPSHOTS=1 tsx --test 'src/**/*.test.ts' 'src/**/*.test.tsx' 'scripts/**/*.test.ts'"
   },

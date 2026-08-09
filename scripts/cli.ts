@@ -2,7 +2,8 @@ import * as fs from 'node:fs';
 
 import { parseArgs, usage } from './cliOptions.ts';
 import type { Assets } from './report.ts';
-import { renderReport } from './report.ts';
+import { inlineSources, renderReport } from './report.ts';
+import { headersFile } from './securityHeaders.ts';
 
 export function run(args: string[], loadAssets: () => Assets, programName: string): number {
   const options = parseArgs(args);
@@ -29,15 +30,21 @@ export function run(args: string[], loadAssets: () => Assets, programName: strin
 
   console.error('Generating HTML report...');
 
-  process.stdout.write(
-    renderReport({
-      template: assets.template,
-      js: assets.js,
-      css: assets.css,
-      csv,
-      chartOptions: options.chartOptions,
-    })
-  );
+  const input = {
+    template: assets.template,
+    js: assets.js,
+    css: assets.css,
+    csv,
+    chartOptions: options.chartOptions,
+  };
+
+  process.stdout.write(renderReport(input));
+
+  if (options.headersFile != null) {
+    // Same sources as the report, so the two copies of the policy agree.
+    fs.writeFileSync(options.headersFile, headersFile(inlineSources(input)));
+    console.error(`Wrote ${options.headersFile}`);
+  }
 
   return 0;
 }

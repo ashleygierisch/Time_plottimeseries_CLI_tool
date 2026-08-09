@@ -1,0 +1,29 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      production-dependencies:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+
+  # Keeps the SHA pins in .github/workflows/ci.yml current -- pinning without
+  # this just means running stale actions forever.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      github-actions:
+        patterns:
+          - "*"

@@ -1,9 +1,18 @@
 <!DOCTYPE html>
+<!--
+  Dev-server entry (npm run dev). It loads the esbuild dev bundle from ./dist.
+
+  scripts/plot-csv.ts reuses this file to assemble a production report: it
+  replaces the PRODUCTION_* comments below with the inlined data, styles and
+  bundle, and strips the ./dist tags, which only exist for the dev server.
+-->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
     <title>Time Series Plotter</title>
+    <!--PRODUCTION_CSP-->
     <link rel="stylesheet" href="./dist/app.css">
     <!--PRODUCTION_DATA-->
     <!--PRODUCTION_STYLE-->

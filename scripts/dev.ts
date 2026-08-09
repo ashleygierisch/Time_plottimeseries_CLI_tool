@@ -6,7 +6,17 @@ import { fileURLToPath } from 'url';
 
 const dirName = path.dirname(fileURLToPath(import.meta.url));
 const PORT = 3000;
-const PUBLIC_DIR = path.resolve(dirName, '..', 'public');
+// Loopback only. The dev server reads files off disk with no authentication,
+// so it has no business being reachable from the rest of the network.
+const HOST = '127.0.0.1';
+const ROOT_DIR = path.resolve(dirName, '..');
+const PUBLIC_DIR = path.resolve(ROOT_DIR, 'public');
+
+/** Guards against a request path escaping the directory it is served from. */
+function isInside(directory: string, filePath: string): boolean {
+  const relative = path.relative(directory, filePath);
+  return relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative);
+}
 
 
 async function start(): Promise<void> {
@@ -46,16 +56,22 @@ async function start(): Promise<void> {
       clients.push(res);
       return;
     } else if (pathname === '/dist/app.js.map') { // Sourcemap
-      filePath = path.resolve(dirName, '..', 'dist', 'app.js.map');
+      filePath = path.resolve(ROOT_DIR, 'dist', 'app.js.map');
     } else if (pathname === '/dist/app.css') { // CSS Bundle
-      filePath = path.resolve(dirName, '..', 'dist', 'app.css');
+      filePath = path.resolve(ROOT_DIR, 'dist', 'app.css');
     } else {
-      filePath = path.join(dirName, '..', pathname === '/' ? 'index.html' : pathname);
+      filePath = path.join(ROOT_DIR, pathname === '/' ? 'index.html' : pathname);
     }
 
     // Check public if not found in root
     if (!fs.existsSync(filePath)) {
       filePath = path.join(PUBLIC_DIR, pathname);
+    }
+
+    if (!isInside(ROOT_DIR, filePath)) {
+      res.writeHead(403);
+      res.end('Forbidden');
+      return;
     }
 
     const ext = path.extname(filePath);
@@ -83,7 +99,7 @@ async function start(): Promise<void> {
 
   });
 
-  server.listen(PORT, () => console.log(`Listening on http://localhost:${PORT}`));
+  server.listen(PORT, HOST, () => console.log(`Listening on http://localhost:${PORT}`));
 }
 
 start();

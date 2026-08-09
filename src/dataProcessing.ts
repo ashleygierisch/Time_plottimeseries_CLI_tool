@@ -211,24 +211,32 @@ export function extractColumnStyles(csvString: string): { csv: string, columnSty
 
 export function parseCSV(csvString: string): { data: DataPoint[], columns: string[], columnStyles: ColumnStyles } {
   const { csv, columnStyles } = extractColumnStyles(csvString);
-  const rawData = d3.csvParse(csv);
 
-  if (rawData.length === 0) return { data: [], columns: [], columnStyles };
+  // csvParseRows, not csvParse. csvParse compiles a row-to-object function with
+  // `new Function`, assembling the source out of the column names -- which can
+  // come from the `?csv=` parameter. That forces 'unsafe-eval' into the CSP,
+  // which would undo the point of hashing the bundle. Rows are plain arrays, so
+  // parsing them costs nothing but an index lookup.
+  const rows = d3.csvParseRows(csv);
 
-  const columns = rawData.columns;
+  if (rows.length < 2) return { data: [], columns: [], columnStyles };
 
-  const data = rawData.map((d) => {
-    const dateKey = rawData.columns.find(c => c.toLowerCase() === 'date');
-    if (!dateKey || !d[dateKey]) return null;
-    const date = new Date(d[dateKey]!);
+  const [columns, ...records] = rows;
+  const dateIndex = columns.findIndex(c => c.toLowerCase() === 'date');
+
+  if (dateIndex === -1) return { data: [], columns, columnStyles };
+
+  const data = records.map((record) => {
+    if (!record[dateIndex]) return null;
+    const date = new Date(record[dateIndex]);
     if (isNaN(date.getTime())) return null;
 
     const point: DataPoint = { date };
-    columns.forEach(col => {
+    columns.forEach((col, i) => {
       if (col.toLowerCase() === 'date') {
         point[col] = date;
       } else {
-        const rawValue = d[col] || '';
+        const rawValue = record[i] || '';
         const numValue = +rawValue;
         point[col] = isNaN(numValue) ? rawValue : numValue;
       }
