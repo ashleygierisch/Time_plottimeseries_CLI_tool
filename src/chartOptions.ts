@@ -19,9 +19,12 @@ export function parseNumericOption(value: string | null | undefined): number | u
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-export function getChartOptions(
-  win: Window & { __CHART_OPTIONS__?: ChartOptions }
-): ChartOptions {
+export interface ChartOptionsSource {
+  location: { href: string };
+  __CHART_OPTIONS__?: ChartOptions;
+}
+
+export function getChartOptions(win: ChartOptionsSource): ChartOptions {
   const params = new URL(win.location.href).searchParams;
   const options: ChartOptions = { ...win.__CHART_OPTIONS__ };
 

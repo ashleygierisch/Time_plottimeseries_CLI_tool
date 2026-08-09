@@ -1,6 +1,7 @@
 import type { ChartOptions } from '../src/chartOptions.ts';
 
-export const USAGE = `Usage: npm run build -- [options] [file.csv] > report.html
+export function usage(programName: string): string {
+  return `Usage: ${programName} [options] [file.csv] > report.html
 
 Reads the CSV from stdin when no file is given.
 
@@ -8,21 +9,34 @@ Options:
   --y-max <number>  Pin the top of the y scale
   --y-min <number>  Pin the bottom of the y scale
   -h, --help        Show this message`;
+}
 
 export interface CLIOptions {
   csvPath: string | null;
   chartOptions: ChartOptions;
   help: boolean;
+  error: string | null;
 }
 
-export class CLIError extends Error {}
+interface Option {
+  name: string;
+  value: string | null;
+}
 
-function parseNumber(name: string, value: string | undefined): number {
+function splitOption(arg: string): Option {
+  const separator = arg.indexOf('=');
+  if (separator === -1) return { name: arg, value: null };
+  return { name: arg.slice(0, separator), value: arg.slice(separator + 1) };
+}
+
+function parseNumber(value: string | null): number | null {
+  if (value == null || value.trim() === '') return null;
   const parsed = Number(value);
-  if (value == null || value.trim() === '' || !Number.isFinite(parsed)) {
-    throw new CLIError(`${name} expects a number, got: ${value ?? '(nothing)'}`);
-  }
-  return parsed;
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function invalid(name: string, value: string | null): string {
+  return `${name} expects a number, got: ${value == null ? '(nothing)' : value}`;
 }
 
 export function parseArgs(args: string[]): CLIOptions {
@@ -30,32 +44,37 @@ export function parseArgs(args: string[]): CLIOptions {
   let csvPath: string | null = null;
 
   for (let i = 0; i < args.length; i++) {
-    const option = args[i].match(/^(--[a-zA-Z-]+|-h)(?:=(.*))?$/);
+    const arg = args[i];
 
-    if (!option) {
-      if (csvPath == null) csvPath = args[i];
+    if (arg !== '-h' && !arg.startsWith('--')) {
+      if (csvPath == null) csvPath = arg;
       continue;
     }
 
-    const [, name] = option;
-    if (name === '-h' || name === '--help') {
-      return { csvPath, chartOptions, help: true };
+    const option = splitOption(arg);
+
+    if (option.name === '-h' || option.name === '--help') {
+      return { csvPath, chartOptions, help: true, error: null };
     }
 
-    // Both `--y-max 5` and `--y-max=5` are accepted.
-    const value = option[2] ?? args[++i];
+    let value = option.value;
+    if (value == null && i + 1 < args.length) {
+      i++;
+      value = args[i];
+    }
 
-    switch (name) {
-      case '--y-max':
-        chartOptions.yMax = parseNumber(name, value);
-        break;
-      case '--y-min':
-        chartOptions.yMin = parseNumber(name, value);
-        break;
-      default:
-        throw new CLIError(`unknown option: ${name}`);
+    const parsed = parseNumber(value);
+
+    if (option.name === '--y-max') {
+      if (parsed == null) return { csvPath, chartOptions, help: false, error: invalid('--y-max', value) };
+      chartOptions.yMax = parsed;
+    } else if (option.name === '--y-min') {
+      if (parsed == null) return { csvPath, chartOptions, help: false, error: invalid('--y-min', value) };
+      chartOptions.yMin = parsed;
+    } else {
+      return { csvPath, chartOptions, help: false, error: `unknown option: ${option.name}` };
     }
   }
 
-  return { csvPath, chartOptions, help: false };
+  return { csvPath, chartOptions, help: false, error: null };
 }

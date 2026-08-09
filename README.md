@@ -16,10 +16,51 @@ You can also upload a CSV file using the button in the upper right corner.
 
 ### CLI
 
+Every commit on `main` publishes prebuilt artifacts to the
+[`latest` release](https://github.com/aaronj1335/plottimeseries/releases/tag/latest).
+Neither of them needs npm, a checkout, or a build:
+
+- `plottimeseries.cjs`, a single JavaScript file that runs on any stable Node.js:
+
+  ```bash
+  node plottimeseries.cjs path/to/your/file.csv > index.html
+  ```
+
+- `plottimeseries-<platform>.tar.gz`, holding two standalone executables that do
+  not need Node.js at all:
+
+  ```bash
+  tar -xzf plottimeseries-linux-x64.tar.gz
+  ./plottimeseries path/to/your/file.csv > index.html
+  ./plottimeseries-compiled path/to/your/file.csv > index.html
+  ```
+
+  They do the same thing and print the same bytes. `plottimeseries` is a Node.js
+  [single executable application](https://nodejs.org/api/single-executable-applications.html):
+  the script above injected into a copy of the Node.js binary, so it is ~126 MB
+  and starts in ~40 ms. `plottimeseries-compiled` is the same program compiled to
+  native code by [scriptc](https://github.com/vercel-labs/scriptc), with no
+  JavaScript engine in it at all, so it is ~1.7 MB and starts in ~4 ms.
+
+Then open `index.html` in a web browser.
+
+From a checkout the same thing is `npm run build`:
+
 1. Clone this repository
 2. Install dependencies: `npm install`
 3. Build the assets: `npm run build path/to/your/file.csv > index.html`
 4. Open `index.html` in a web browser
+
+`npm run build:standalone` builds all three artifacts locally into `dist/`. Both
+executables are built for the platform you run it on: the single executable
+application embeds whichever Node.js ran the build, and the compiled one needs
+`clang` on `PATH`. If scriptc cannot compile, the build says so and carries on
+with the other two.
+
+The CLI has to stay inside the subset of TypeScript that scriptc compiles
+statically, which is why `scripts/cli.ts` and everything it imports avoid
+`throw`, regular expressions and DOM types. `npx scriptc coverage dist/scriptc/main.ts`
+reports what does not compile, if that ever needs checking.
 
 The CSV can also be piped in on stdin, and the y scale can be pinned with
 `--y-max` / `--y-min` (note the `--` that stops npm from eating the flags):
@@ -27,6 +68,12 @@ The CSV can also be piped in on stdin, and the y scale can be pinned with
 ```bash
 npm run build -- --y-max 100 --y-min 0 path/to/your/file.csv > index.html
 cat path/to/your/file.csv | npm run build -- --y-max 100 > index.html
+```
+
+The prebuilt artifacts take the same arguments, without the `--`:
+
+```bash
+cat path/to/your/file.csv | ./plottimeseries --y-max 100 > index.html
 ```
 
 In the app the same settings are available as `yMax` / `yMin` query parameters.
@@ -76,6 +123,8 @@ To validate changes:
 2. `npm run typecheck`
 3. `npm run test`
 4. `mkdir -p pages-public && npm run build public/data.csv > pages-public/index.html`
+5. `npm run build:standalone`
+6. `./dist/plottimeseries public/data.csv > /dev/null && ./dist/plottimeseries-compiled public/data.csv > /dev/null`
 
 ## Background
 

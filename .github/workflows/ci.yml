@@ -33,6 +33,94 @@ jobs:
       with:
         path: pages-public
 
+  standalone:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - os: ubuntu-latest
+          target: linux-x64
+          suffix: ''
+        - os: macos-latest
+          target: macos-arm64
+          suffix: ''
+        - os: windows-latest
+          target: windows-x64
+          suffix: '.exe'
+    runs-on: ${{ matrix.os }}
+    env:
+      EXE: plottimeseries${{ matrix.suffix }}
+      COMPILED: plottimeseries-compiled${{ matrix.suffix }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js 24.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 24.x
+        cache: 'npm'
+    - run: npm ci
+    - run: npm run build:standalone
+    - name: Smoke test the standalone build
+      shell: bash
+      run: |
+        node dist/plottimeseries.cjs public/data.csv > /dev/null
+        "./dist/$EXE" public/data.csv > /dev/null
+        cat public/data.csv | "./dist/$EXE" > /dev/null
+        if [ -f "dist/$COMPILED" ]; then
+          "./dist/$COMPILED" public/data.csv > /dev/null
+          cat public/data.csv | "./dist/$COMPILED" --y-max 100 > /dev/null
+        else
+          echo "::warning::scriptc produced no compiled binary on ${{ matrix.target }}"
+        fi
+    - name: Package the standalone build
+      shell: bash
+      run: |
+        mkdir -p release
+        files="$EXE"
+        if [ -f "dist/$COMPILED" ]; then
+          files="$files $COMPILED"
+        fi
+        tar -czf "release/plottimeseries-${{ matrix.target }}.tar.gz" -C dist $files
+    - name: Upload the standalone executable
+      uses: actions/upload-artifact@v4
+      with:
+        name: plottimeseries-${{ matrix.target }}
+        path: release/plottimeseries-${{ matrix.target }}.tar.gz
+    - name: Upload the single file script
+      if: matrix.target == 'linux-x64'
+      uses: actions/upload-artifact@v4
+      with:
+        name: plottimeseries-script
+        path: dist/plottimeseries.cjs
+
+  release:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [build, standalone]
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/download-artifact@v4
+      with:
+        path: release
+        pattern: plottimeseries-*
+        merge-multiple: true
+    - name: Publish the latest build
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh release delete latest --yes --cleanup-tag || true
+        gh release create latest release/* \
+          --target "$GITHUB_SHA" \
+          --prerelease \
+          --title "Latest build" \
+          --notes "Standalone build of [\`${GITHUB_SHA::7}\`](https://github.com/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}).
+
+        \`plottimeseries.cjs\` runs on any stable Node.js: \`node plottimeseries.cjs data.csv > report.html\`.
+
+        The per-platform archives hold executables that need nothing installed at all: \`plottimeseries\`, which embeds Node.js, and \`plottimeseries-compiled\`, the same program compiled to native code by scriptc."
+
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment:

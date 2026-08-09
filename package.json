@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "node scripts/dev.ts",
     "build": "node scripts/plot-csv.ts",
+    "build:standalone": "node scripts/build-standalone.ts",
     "lint": "eslint src scripts",
     "typecheck": "tsc --noEmit -p src/tsconfig.json -p scripts/tsconfig.json",
     "test": "tsx --test 'src/**/*.test.ts' 'src/**/*.test.tsx' 'scripts/**/*.test.ts'",
@@ -32,7 +33,9 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.5",
     "globals": "^16.5.0",
+    "postject": "^1.0.0-alpha.6",
     "prettier": "^3.7.4",
+    "scriptc": "^0.0.22",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.48.1"
