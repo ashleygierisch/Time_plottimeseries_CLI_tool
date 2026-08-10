@@ -95,7 +95,7 @@ jobs:
       shell: bash
       run: |
         mkdir -p release
-        files="$EXE"
+        files="$EXE plottimeseries.cjs"
         if [ -f "dist/$COMPILED" ]; then
           files="$files $COMPILED"
         fi
@@ -146,7 +146,7 @@ jobs:
 
         \`plottimeseries.cjs\` runs on any stable Node.js: \`node plottimeseries.cjs data.csv > report.html\`.
 
-        The per-platform archives hold executables that need nothing installed at all: \`plottimeseries\`, which embeds Node.js, and \`plottimeseries-compiled\`, the same program compiled to native code by scriptc."
+        The per-platform archives hold that same \`plottimeseries.cjs\`, plus executables that need nothing installed at all: \`plottimeseries\`, which embeds Node.js, and \`plottimeseries-compiled\`, the same program compiled to native code by scriptc."
 
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'

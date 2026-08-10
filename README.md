@@ -26,8 +26,8 @@ Neither of them needs npm, a checkout, or a build:
   node plottimeseries.cjs path/to/your/file.csv > index.html
   ```
 
-- `plottimeseries-<platform>.tar.gz`, holding two standalone executables that do
-  not need Node.js at all:
+- `plottimeseries-<platform>.tar.gz`, holding the same `plottimeseries.cjs` plus
+  two standalone executables that do not need Node.js at all:
 
   ```bash
   tar -xzf plottimeseries-linux-x64.tar.gz
@@ -35,12 +35,15 @@ Neither of them needs npm, a checkout, or a build:
   ./plottimeseries-compiled path/to/your/file.csv > index.html
   ```
 
-  They do the same thing and print the same bytes. `plottimeseries` is a Node.js
-  [single executable application](https://nodejs.org/api/single-executable-applications.html):
+  All three do the same thing and print the same bytes. `plottimeseries` is a
+  Node.js [single executable application](https://nodejs.org/api/single-executable-applications.html):
   the script above injected into a copy of the Node.js binary, so it is ~126 MB
   and starts in ~40 ms. `plottimeseries-compiled` is the same program compiled to
   native code by [scriptc](https://github.com/vercel-labs/scriptc), with no
-  JavaScript engine in it at all, so it is ~1.7 MB and starts in ~4 ms.
+  JavaScript engine in it at all, so it is ~1.7 MB and starts in ~4 ms. Bundling
+  `plottimeseries.cjs` into the archive too means one download can fall back
+  from the compiled executable to plain `node`, for platforms scriptc can't
+  compile for.
 
 Then open `index.html` in a web browser.
 
