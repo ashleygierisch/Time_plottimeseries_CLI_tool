@@ -70,6 +70,26 @@ test('HoverDetails renders correctly with a column excluded from the plot', asyn
   await assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
 });
 
+test('HoverDetails sizes columns from the widest value in the data, not the hovered one', async (t) => {
+  const csv = `date,amount
+2023-01-01,1
+2023-01-02,123456789
+2023-01-03,2`;
+  const { formattedData, columns } = processCSV(csv);
+  const element = React.createElement(HoverDetails, {
+    formattedData,
+    hoveredDate: formattedData[0].date,
+    columns,
+    columnColors: { amount: 'green' },
+    isolatedSeries: null,
+    onSelectSeries: () => { },
+  });
+  const html = renderToStaticMarkup(element);
+  const rendered = await format(html, { parser: 'html' });
+
+  await assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
+});
+
 test('HoverDetails renders correctly when date column is not the first column', async (t) => {
   const csv = `val1,date,val2\n10,2023-01-01,20`;
   const { formattedData, columns } = processCSV(csv);

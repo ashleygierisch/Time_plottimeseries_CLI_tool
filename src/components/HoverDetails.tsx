@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ColumnStyles, FormattedDataPoint, formatColumnName, isSeriesColumn, LinkData } from '../dataProcessing';
 
 interface HoverDetailsProps {
@@ -11,12 +11,24 @@ interface HoverDetailsProps {
   columnStyles?: ColumnStyles;
 }
 
+// useLayoutEffect warns when rendered on the server (the CLI report is rendered
+// with renderToStaticMarkup), so fall back to useEffect there.
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
+
+const EMPTY_VALUE = '-';
+
+const cellText = (val: string | Date | LinkData | undefined): string => {
+  if (val && typeof val === 'object' && 'linkText' in val && 'url' in val) return val.linkText;
+  if (val instanceof Date) return val.toISOString();
+  return String(val ?? EMPTY_VALUE);
+};
+
 const renderCellValue = (val: string | Date | LinkData | undefined) => {
   if (val && typeof val === 'object' && 'linkText' in val && 'url' in val) {
     return (
-      <a 
-        href={val.url.toString()} 
-        target="_blank" 
+      <a
+        href={val.url.toString()}
+        target="_blank"
         rel="noopener noreferrer"
         style={{ color: '#4da6ff', textDecoration: 'none' }}
         onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
@@ -26,8 +38,16 @@ const renderCellValue = (val: string | Date | LinkData | undefined) => {
       </a>
     );
   }
-  return String(val ?? '-');
+  return String(val ?? EMPTY_VALUE);
 };
+
+interface Measurement {
+  /** Identifies the content the widths were measured for. */
+  key: string;
+  /** Width of the containing element when the measurement was taken. */
+  containerWidth: number;
+  widths: number[];
+}
 
 export const HoverDetails: React.FC<HoverDetailsProps> = ({
   formattedData,
@@ -38,22 +58,89 @@ export const HoverDetails: React.FC<HoverDetailsProps> = ({
   onSelectSeries,
   columnStyles = {},
 }) => {
-  const currentData = hoveredDate 
-    ? formattedData.find(d => d.date.getTime() === hoveredDate.getTime()) 
+  const currentData = hoveredDate
+    ? formattedData.find(d => d.date.getTime() === hoveredDate.getTime())
     : null;
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const headerRowRef = useRef<HTMLTableRowElement>(null);
+  const [measurement, setMeasurement] = useState<Measurement | null>(null);
+
+  // The value row only ever shows the hovered row, so laying the table out from
+  // the visible content makes every column resize as the pointer moves. Instead
+  // pick, per column, the longest value in the whole data set (character count
+  // is a good enough proxy for width, and the candidate itself is measured for
+  // real below) and size the columns from that once.
+  const widestValues = useMemo(() => {
+    const widest: Record<string, string> = {};
+    for (const col of columns) widest[col] = EMPTY_VALUE;
+    for (const row of formattedData) {
+      for (const col of columns) {
+        const text = cellText(col.toLowerCase() === 'date' ? row.formattedDate : row[col]);
+        if (text.length > widest[col].length) widest[col] = text;
+      }
+    }
+    return widest;
+  }, [formattedData, columns]);
+
+  const headerLabels = useMemo(
+    () => columns.map(col => formatColumnName(col, columnStyles[col])),
+    [columns, columnStyles],
+  );
+
+  // Anything that changes the widest content invalidates the measurement.
+  const measureKey = useMemo(
+    () => JSON.stringify(columns.map((col, i) => [headerLabels[i], widestValues[col]])),
+    [columns, headerLabels, widestValues],
+  );
+
+  const columnWidths = measurement?.key === measureKey ? measurement.widths : null;
+
+  // First pass: the browser lays the table out with the sizing row below, which
+  // holds the widest content each column can ever show. Second pass (and every
+  // render after it): those widths are pinned with `table-layout: fixed`, so
+  // hovering a different date can no longer move a column.
+  useIsomorphicLayoutEffect(() => {
+    if (columnWidths) return;
+    const container = containerRef.current;
+    const headerRow = headerRowRef.current;
+    if (!container || !headerRow) return;
+    const widths = Array.from(headerRow.cells, cell => Math.ceil(cell.getBoundingClientRect().width));
+    if (widths.length !== columns.length) return;
+    setMeasurement({ key: measureKey, containerWidth: container.clientWidth, widths });
+  }, [columnWidths, measureKey, columns.length]);
+
+  // Pinned widths are only valid for the width they were measured at, so drop
+  // them when the container resizes and let the effect above measure again.
+  useIsomorphicLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => {
+      setMeasurement(prev => (prev && prev.containerWidth !== container.clientWidth ? null : prev));
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div style={{ 
-      padding: '1rem', 
-      background: '#333', 
-      borderBottom: '1px solid #444', 
+    <div ref={containerRef} style={{
+      padding: '1rem',
+      background: '#333',
+      borderBottom: '1px solid #444',
       overflowX: 'auto',
       color: '#ffffff'
     }}>
-      <table className="data-table" style={{ fontSize: '0.9rem' }}>
+      <table className="data-table" style={{ fontSize: '0.9rem', tableLayout: columnWidths ? 'fixed' : 'auto' }}>
+        {columnWidths && (
+          <colgroup>
+            {columns.map((col, i) => (
+              <col key={col} style={{ width: `${columnWidths[i]}px` }} />
+            ))}
+          </colgroup>
+        )}
         <thead>
-          <tr>
-            {columns.map(col => {
+          <tr ref={headerRowRef}>
+            {columns.map((col, i) => {
               const isDate = col.toLowerCase() === 'date';
               const isSeries = isSeriesColumn(col, columnStyles);
               return (
@@ -69,13 +156,26 @@ export const HoverDetails: React.FC<HoverDetailsProps> = ({
                   }}
                   onClick={() => isSeries && onSelectSeries(col)}
                 >
-                  {formatColumnName(col, columnStyles[col])}
+                  {headerLabels[i]}
                 </th>
               );
             })}
           </tr>
         </thead>
         <tbody>
+          {/* Zero-height sizing row: only rendered until the widths are pinned. */}
+          {!columnWidths && (
+            <tr aria-hidden="true">
+              {columns.map((col, i) => (
+                <td key={col} style={{ padding: '0 8px', height: 0, border: 0 }}>
+                  <div style={{ height: 0, overflow: 'hidden', visibility: 'hidden', whiteSpace: 'nowrap' }}>
+                    <div>{headerLabels[i]}</div>
+                    <div style={{ fontWeight: 'bold' }}>{widestValues[col]}</div>
+                  </div>
+                </td>
+              ))}
+            </tr>
+          )}
           {/* Row of Colors */}
           <tr>
             {columns.map(col => {
@@ -86,10 +186,10 @@ export const HoverDetails: React.FC<HoverDetailsProps> = ({
                   style={{ padding: '4px 8px' }}
                 >
                   {isSeries && (
-                    <div style={{ 
-                      width: '100%', 
-                      height: '6px', 
-                      backgroundColor: columnColors[col], 
+                    <div style={{
+                      width: '100%',
+                      height: '6px',
+                      backgroundColor: columnColors[col],
                       opacity: isolatedSeries && isolatedSeries !== col ? 0.3 : 1
                     }}></div>
                   )}
