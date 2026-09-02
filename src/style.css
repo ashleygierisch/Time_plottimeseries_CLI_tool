@@ -4,11 +4,11 @@
   font-weight: 400;
   color-scheme: dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  background-color: #000000;
 }
 
 html {
-  background-color: #242424;
+  background-color: #000000;
 }
 
 body {
@@ -30,7 +30,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #2a2a2a;
+  background: #0d0d0d;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -45,12 +45,44 @@ body {
   height: 500px;
   max-height: 40vh;
   width: 100%;
+  cursor: crosshair;
+}
+
+/* The hover row is a readout, not a heading: keep its labels quiet. */
+.hover-details th {
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+/*
+ * The hover details is the data table's header, so it sits above the rows and
+ * casts a shadow down over them.
+ */
+.hover-details {
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 3px 9px rgba(0, 0, 0, 0.9);
+}
+
+/*
+ * The table below shares the hover details' box, and its widths, so the two
+ * read as one table.
+ */
+.data-table-container {
+  padding: 0 1rem;
+  overflow-x: auto;
+}
+
+/* A hairline in the same ink as the plot's fine grid. */
+.data-table-container tbody tr {
+  border-top: 1px solid rgba(207, 224, 240, 0.08);
 }
 
 table.data-table {
   border-collapse: collapse;
   text-align: right;
   width: 100%;
+  font-size: 0.9rem;
 }
 
 table.data-table td {

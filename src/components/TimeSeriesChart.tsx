@@ -2,8 +2,27 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import * as d3 from 'd3';
 import { ColumnStyles, DataPoint, isSeriesColumn } from '../dataProcessing';
 import { ChartOptions } from '../chartOptions';
+import { subdivideGridPositions } from '../gridLines';
 
 const CLIP_ID = 'plot-area-clip';
+const GRADIENT_ID = 'plot-area-gradient';
+
+/**
+ * Target number of major grid lines per axis. The axes label the very same
+ * ticks, which is what keeps labels, major lines and fine lines on one grid.
+ */
+const MAJOR_TICKS = 10;
+
+/** Fine grid lines per major interval, engineering-paper style. */
+const GRID_DIVISIONS = 5;
+
+const GRID_COLOR = '#cfe0f0';
+
+/** Rescaling and isolating a series, as clicking a header does. */
+const UPDATE_MS = 750;
+
+/** The marker stroke that draws each series in when it first appears. */
+const DRAW_MS = 1500;
 
 interface TimeSeriesChartProps {
   data: DataPoint[];
@@ -79,14 +98,27 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     let g = svg.select<SVGGElement>('g.main-group');
     if (g.empty()) {
       g = svg.append('g').attr('class', 'main-group');
+      const defs = svg.append('defs');
+
+      // Plot backdrop: black at the baseline, lifting to a barely-there blue
+      // toward the top of the plot area.
+      const gradient = defs.append('linearGradient')
+        .attr('id', GRADIENT_ID)
+        .attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', 1);
+      gradient.append('stop').attr('offset', '0%').attr('stop-color', '#1b2029');
+      gradient.append('stop').attr('offset', '55%').attr('stop-color', '#0b0d11');
+      gradient.append('stop').attr('offset', '100%').attr('stop-color', '#000000');
 
       // Order matters for layering
-      g.append('g').attr('class', 'grid-h').style('opacity', 0.2);
+      g.append('rect').attr('class', 'plot-background').attr('fill', `url(#${GRADIENT_ID})`);
+      g.append('g').attr('class', 'grid-minor').style('opacity', 0.07);
+      g.append('g').attr('class', 'grid-v').style('opacity', 0.16);
+      g.append('g').attr('class', 'grid-h').style('opacity', 0.16);
       g.append('g').attr('class', 'axis-x').attr('transform', `translate(0,${innerHeight})`);
       g.append('g').attr('class', 'axis-y');
       // Clip the lines so an explicit y-min/y-max crops the series instead of
       // letting them draw over the axes.
-      svg.append('defs').append('clipPath').attr('id', CLIP_ID).append('rect');
+      defs.append('clipPath').attr('id', CLIP_ID).append('rect');
       g.append('g').attr('class', 'lines-group').attr('clip-path', `url(#${CLIP_ID})`);
       g.append('line').attr('class', 'cursor-rule')
         .attr('stroke', 'white').attr('stroke-width', 1).attr('stroke-dasharray', '4 4').style('opacity', 0);
@@ -100,6 +132,8 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     // Update axes positions if dimensions changed
     g.select<SVGGElement>('.axis-x').attr('transform', `translate(0,${innerHeight})`);
     g.select<SVGGElement>('.hover-overlay').attr('width', innerWidth).attr('height', innerHeight);
+    g.select('.plot-background')
+      .attr('x', 0).attr('y', 0).attr('width', innerWidth).attr('height', innerHeight);
     svg.select(`#${CLIP_ID} rect`)
       .attr('x', 0).attr('y', 0).attr('width', innerWidth).attr('height', innerHeight);
 
@@ -132,18 +166,45 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
 
     // 3. Transitions
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const t = svg.transition().duration(750) as unknown as d3.Transition<any, any, any, any>;
+    const t = svg.transition().duration(UPDATE_MS) as unknown as d3.Transition<any, any, any, any>;
 
-    // Horizontal Grid
+    // Major grid lines, on the same tick values the axes label.
+    const yTicks = y.ticks(MAJOR_TICKS);
+    const xTicks = x.ticks(MAJOR_TICKS);
+
     g.select<SVGGElement>('.grid-h')
       .transition(t)
-      .call(d3.axisLeft(y).tickSize(-innerWidth).tickFormat(() => ''))
+      .call(d3.axisLeft(y).tickValues(yTicks).tickSize(-innerWidth).tickFormat(() => ''))
       .call(g => g.select('.domain').remove())
-      .selectAll('line').attr('stroke', '#fff');
+      .selectAll('line').attr('stroke', GRID_COLOR);
+
+    g.select<SVGGElement>('.grid-v')
+      .attr('transform', `translate(0,${innerHeight})`)
+      .transition(t)
+      .call(d3.axisBottom(x).tickValues(xTicks).tickSize(-innerHeight).tickFormat(() => ''))
+      .call(g => g.select('.domain').remove())
+      .selectAll('line').attr('stroke', GRID_COLOR);
+
+    // Fine grid, subdividing the major intervals exactly so the two line up.
+    const minorLines = [
+      ...subdivideGridPositions(yTicks.map(y), GRID_DIVISIONS, [0, innerHeight])
+        .map(pos => ({ x1: 0, x2: innerWidth, y1: pos, y2: pos })),
+      ...subdivideGridPositions(xTicks.map(x), GRID_DIVISIONS, [0, innerWidth])
+        .map(pos => ({ x1: pos, x2: pos, y1: 0, y2: innerHeight })),
+    ];
+
+    g.select('.grid-minor')
+      .selectAll<SVGLineElement, typeof minorLines[number]>('line')
+      .data(minorLines)
+      .join('line')
+      .attr('stroke', GRID_COLOR)
+      .attr('shape-rendering', 'crispEdges')
+      .attr('x1', d => d.x1).attr('x2', d => d.x2)
+      .attr('y1', d => d.y1).attr('y2', d => d.y2);
 
     // Axes
-    g.select<SVGGElement>('.axis-x').call(d3.axisBottom(x)); // X usually static unless data changes time range
-    g.select<SVGGElement>('.axis-y').transition(t).call(d3.axisLeft(y));
+    g.select<SVGGElement>('.axis-x').call(d3.axisBottom(x).tickValues(xTicks)); // X usually static unless data changes time range
+    g.select<SVGGElement>('.axis-y').transition(t).call(d3.axisLeft(y).tickValues(yTicks));
 
     // 4. Lines
     const lineGenerator = d3.line<DataPoint>().x(d => x(d.date));
@@ -155,27 +216,52 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     const lines = linesGroup.selectAll<SVGPathElement, string>('path.series-line')
       .data(plottableColumns, d => d);
 
-    // Enter
+    const pathFor = (col: string) => {
+      if (isolatedSeries && isolatedSeries !== col) {
+        return zeroLineGenerator(data) || '';
+      }
+      // Active line
+      return lineGenerator.y(d => y(d[col] as number))(data) || '';
+    };
+
+    // Enter: draw the line in its final shape, then reveal it left to right by
+    // walking a full-length dash gap off the end, like a marker stroke. The
+    // transition is named so the shared `t` on updates never cancels it.
     lines.enter()
       .append('path')
       .attr('class', 'series-line')
       .attr('fill', 'none')
       .attr('stroke-width', 1.5)
       .attr('stroke', col => columnColors[col])
-      .attr('d', () => {
-        // Start from zero line
-        return zeroLineGenerator(data) || '';
-      })
-      .merge(lines) // Update + Enter
+      .attr('d', pathFor)
+      .each(function () {
+        const path = this as SVGPathElement;
+        const length = typeof path.getTotalLength === 'function' ? path.getTotalLength() : 0;
+        if (!length) return;
+
+        // Leaving the dash attributes behind would clip later updates, so drop
+        // them however the reveal ends.
+        const clearDash = () => {
+          d3.select(path).attr('stroke-dasharray', null).attr('stroke-dashoffset', null);
+        };
+
+        d3.select(path)
+          .attr('stroke-dasharray', `${length} ${length}`)
+          .attr('stroke-dashoffset', length)
+          .transition('draw')
+          .duration(DRAW_MS)
+          .ease(d3.easeCubicOut)
+          .attr('stroke-dashoffset', 0)
+          .on('end', clearDash)
+          .on('interrupt', clearDash)
+          .on('cancel', clearDash);
+      });
+
+    // Update
+    lines
       .transition(t)
       .attr('stroke', col => columnColors[col]) // Ensure color updates if needed
-      .attr('d', col => {
-        if (isolatedSeries && isolatedSeries !== col) {
-          return zeroLineGenerator(data) || '';
-        }
-        // Active line
-        return lineGenerator.y(d => y(d[col] as number))(data) || '';
-      });
+      .attr('d', pathFor);
 
     // Exit
     lines.exit().remove();
@@ -219,8 +305,8 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     <div style={{
       position: 'relative', // Changed from internal stickiness
       zIndex: 90,
-      background: '#242424', // Match body bg
-      borderBottom: '1px solid #444',
+      background: '#000000', // Match body bg
+      borderBottom: '1px solid #333',
       color: '#ffffff'
     }}>
       <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0.5rem', gap: '1rem', alignItems: 'center' }}>

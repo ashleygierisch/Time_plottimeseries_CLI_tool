@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ColumnStyles, FormattedDataPoint, formatColumnName, isSeriesColumn, LinkData } from '../dataProcessing';
+import { apportionColumnWidths } from '../columnWidths';
 
 interface HoverDetailsProps {
   formattedData: FormattedDataPoint[];
@@ -9,6 +10,11 @@ interface HoverDetailsProps {
   isolatedSeries: string | null;
   onSelectSeries: (series: string) => void;
   columnStyles?: ColumnStyles;
+  /**
+   * Reports the pinned column widths, so the data table below can adopt the
+   * same layout and read as the body under this header.
+   */
+  onColumnWidths?: (widths: number[] | null) => void;
 }
 
 // useLayoutEffect warns when rendered on the server (the CLI report is rendered
@@ -57,6 +63,7 @@ export const HoverDetails: React.FC<HoverDetailsProps> = ({
   isolatedSeries,
   onSelectSeries,
   columnStyles = {},
+  onColumnWidths,
 }) => {
   const currentData = hoveredDate
     ? formattedData.find(d => d.date.getTime() === hoveredDate.getTime())
@@ -105,10 +112,16 @@ export const HoverDetails: React.FC<HoverDetailsProps> = ({
     const container = containerRef.current;
     const headerRow = headerRowRef.current;
     if (!container || !headerRow) return;
-    const widths = Array.from(headerRow.cells, cell => Math.ceil(cell.getBoundingClientRect().width));
+    const widths = apportionColumnWidths(
+      Array.from(headerRow.cells, cell => cell.getBoundingClientRect().width)
+    );
     if (widths.length !== columns.length) return;
     setMeasurement({ key: measureKey, containerWidth: container.clientWidth, widths });
   }, [columnWidths, measureKey, columns.length]);
+
+  useEffect(() => {
+    onColumnWidths?.(columnWidths);
+  }, [columnWidths, onColumnWidths]);
 
   // Pinned widths are only valid for the width they were measured at, so drop
   // them when the container resizes and let the effect above measure again.
@@ -123,10 +136,10 @@ export const HoverDetails: React.FC<HoverDetailsProps> = ({
   }, []);
 
   return (
-    <div ref={containerRef} style={{
+    <div ref={containerRef} className="hover-details" style={{
       padding: '1rem',
-      background: '#333',
-      borderBottom: '1px solid #444',
+      background: '#111111',
+      borderBottom: '1px solid #333',
       overflowX: 'auto',
       color: '#ffffff'
     }}>

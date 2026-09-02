@@ -1,12 +1,16 @@
 import React, { useRef } from 'react';
-import { ColumnStyles, FormattedDataPoint, formatColumnName, LinkData } from '../dataProcessing';
+import { FormattedDataPoint, LinkData } from '../dataProcessing';
 
 interface DataTableProps {
   formattedData: FormattedDataPoint[];
   columns: string[];
   hoveredDate: Date | null;
   onHover: (date: Date | null) => void;
-  columnStyles?: ColumnStyles;
+  /**
+   * Column widths measured by the hover details, which labels these columns and
+   * so has to line up with them. Without them the table lays itself out.
+   */
+  columnWidths?: number[] | null;
 }
 
 const renderCellValue = (val: string | Date | LinkData) => {
@@ -27,39 +31,33 @@ const renderCellValue = (val: string | Date | LinkData) => {
   return String(val);
 };
 
-export const DataTable: React.FC<DataTableProps> = ({ formattedData, columns, hoveredDate, onHover, columnStyles = {} }) => {
+export const DataTable: React.FC<DataTableProps> = ({ formattedData, columns, hoveredDate, onHover, columnWidths }) => {
   const tableRef = useRef<HTMLTableElement>(null);
 
+  // The hover details row is this table's header, so the two only read as one
+  // table while they share a column layout.
+  const pinnedWidths = columnWidths?.length === columns.length ? columnWidths : null;
+
   return (
-      <table ref={tableRef} className="data-table">
-        <thead style={{ position: 'sticky', top: 0, background: '#1a1a1a', zIndex: 10 }}>
-          <tr>
-            {columns.map(col => {
-              const isDate = col.toLowerCase() === 'date';
-              return (
-                <th 
-                  key={col} 
-                  style={{ 
-                    position: isDate ? 'sticky' : undefined,
-                    top: isDate ? 0 : undefined,
-                    padding: '12px', 
-                    textAlign: isDate ? 'left' : undefined,
-                    borderBottom: '1px solid #555' 
-                  }}
-                >
-                  {formatColumnName(col, columnStyles[col])}
-                </th>
-              );
-            })}
-          </tr>
-        </thead>
+      <table
+        ref={tableRef}
+        className="data-table"
+        style={{ tableLayout: pinnedWidths ? 'fixed' : 'auto' }}
+      >
+        {pinnedWidths && (
+          <colgroup>
+            {columns.map((col, i) => (
+              <col key={col} style={{ width: `${pinnedWidths[i]}px` }} />
+            ))}
+          </colgroup>
+        )}
         <tbody>
           {formattedData.map((row, i) => {
              const isHighlighted = hoveredDate && row.date.getTime() === hoveredDate.getTime();
              return (
                <tr
                  key={i}
-                 style={{ backgroundColor: isHighlighted ? '#444' : (i % 2 === 0 ? '#2a2a2a' : '#242424') }}
+                 style={{ backgroundColor: isHighlighted ? '#333' : (i % 2 === 0 ? '#0d0d0d' : '#000000') }}
                  onMouseEnter={() => onHover(row.date)}
                >
                  {columns.map(col => {

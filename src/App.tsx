@@ -24,6 +24,10 @@ function App() {
 
   const chartOptions = useMemo(() => getChartOptions(window), []);
 
+  // The hover details doubles as the data table's header, and hands down the
+  // column widths it measured so the two line up.
+  const [columnWidths, setColumnWidths] = useState<number[] | null>(null);
+
   // Interaction State
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
   const [isolatedSeries, setIsolatedSeries] = useState<string | null>(null);
@@ -125,7 +129,7 @@ function App() {
         position: isSticky ? 'sticky' : 'static',
         top: 0,
         zIndex: 100,
-        backgroundColor: '#242424' // Ensure opacity
+        backgroundColor: '#000000' // Ensure opacity
       }}>
         <TimeSeriesChart
           data={displayData}
@@ -150,15 +154,18 @@ function App() {
           isolatedSeries={isolatedSeries}
           onSelectSeries={handleSelectSeries}
           columnStyles={columnStyles}
+          onColumnWidths={setColumnWidths}
         />
       </div>
-      <DataTable
-        formattedData={displayFormattedData}
-        columns={columns}
-        hoveredDate={hoveredDate}
-        onHover={setHoveredDate}
-        columnStyles={columnStyles}
-      />
+      <div className="data-table-container">
+        <DataTable
+          formattedData={displayFormattedData}
+          columns={columns}
+          hoveredDate={hoveredDate}
+          onHover={setHoveredDate}
+          columnWidths={columnWidths}
+        />
+      </div>
     </div>
   );
 }
