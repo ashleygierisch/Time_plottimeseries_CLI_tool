@@ -143,8 +143,8 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
       .range([0, innerWidth]);
 
     // Calculate Y domain based on isolation
-    let yMax = 0;
-    let yMin = 0;
+    let yMax: number;
+    let yMin: number;
     if (isolatedSeries) {
       yMax = d3.max(data, d => d[isolatedSeries as string] as number) || 0;
       yMin = d3.min(data, d => d[isolatedSeries as string] as number) || 0;

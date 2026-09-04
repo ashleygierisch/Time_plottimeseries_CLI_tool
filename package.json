@@ -23,6 +23,7 @@
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/d3": "^7.4.3",
     "@types/node": "^26.1.2",
     "@types/react": "^19.2.7",
@@ -30,9 +31,8 @@
     "@typescript-eslint/eslint-plugin": "^8.68.0",
     "@typescript-eslint/parser": "^8.68.0",
     "esbuild": "^0.28.2",
-    "eslint": "^9.39.1",
+    "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-react": "^7.37.5",
     "globals": "^17.9.0",
     "postject": "^1.0.0-alpha.6",
     "prettier": "^3.9.6",
