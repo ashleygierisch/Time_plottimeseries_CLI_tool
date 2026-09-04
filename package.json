@@ -33,7 +33,7 @@
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.5",
-    "globals": "^16.5.0",
+    "globals": "^17.9.0",
     "postject": "^1.0.0-alpha.6",
     "prettier": "^3.9.6",
     "scriptc": "^0.0.35",
