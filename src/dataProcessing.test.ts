@@ -74,8 +74,8 @@ describe('parseCSV', () => {
   });
 });
 
-test('analyzeColumnFormatters', async (t) => {
-  await t.test('formats range [-2, 2] as percentages', () => {
+describe('analyzeColumnFormatters', () => {
+  it('formats range [-2, 2] as percentages', () => {
     const columns = ['pct'];
     const data: DataPoint[] = [
       { date: new Date(), pct: 0.5 },
@@ -91,7 +91,7 @@ test('analyzeColumnFormatters', async (t) => {
     assert.strictEqual(fmt(-0.5), '-50.0%');
   });
 
-  await t.test('formats range [-10, 10] as 1 decimal place', () => {
+  it('formats range [-10, 10] as 1 decimal place', () => {
     const columns = ['dec'];
     const data: DataPoint[] = [
       { date: new Date(), dec: 5.55 },
@@ -107,7 +107,7 @@ test('analyzeColumnFormatters', async (t) => {
     assert.strictEqual(fmt(-9.12), '-9.1');
   });
 
-  await t.test('formats range outside [-10, 10] as integers', () => {
+  it('formats range outside [-10, 10] as integers', () => {
     const columns = ['int'];
     const data: DataPoint[] = [
       { date: new Date(), int: 10.1 },
@@ -122,7 +122,7 @@ test('analyzeColumnFormatters', async (t) => {
     assert.strictEqual(fmt(-15.9), '-16');
   });
 
-  await t.test('column styles override the inferred format', () => {
+  it('column styles override the inferred format', () => {
     const columns = ['a', 'b', 'c', 'd', 'e'];
     const data: DataPoint[] = [{ date: new Date(), a: 0.7, b: 0.7, c: 0.7, d: 0.7, e: 0.7 }];
     const columnStyles: ColumnStyles = {
@@ -143,7 +143,7 @@ test('analyzeColumnFormatters', async (t) => {
     assert.strictEqual(defined(formatters['e'])(0.7), '0.7000');
   });
 
-  await t.test('falls back to inference for styles that say nothing about numbers', () => {
+  it('falls back to inference for styles that say nothing about numbers', () => {
     const columns = ['pct'];
     const data: DataPoint[] = [{ date: new Date(), pct: 0.5 }];
     const formatters = analyzeColumnFormatters(data, columns, { pct: { color: 'red' } });
@@ -172,43 +172,43 @@ test('isSeriesColumn', () => {
   assert.strictEqual(isSeriesColumn('val1', { val1: { color: 'red' } }), true);
 });
 
-test('splitHeaderLine', async (t) => {
-  await t.test('splits a plain header line', () => {
+describe('splitHeaderLine', () => {
+  it('splits a plain header line', () => {
     assert.deepStrictEqual(splitHeaderLine('date,val1,val2'), ['date', 'val1', 'val2']);
   });
 
-  await t.test('keeps commas inside a style spec', () => {
+  it('keeps commas inside a style spec', () => {
     assert.deepStrictEqual(
       splitHeaderLine('date,col1{type: decimal, places: 2},col2'),
       ['date', 'col1{type: decimal, places: 2}', 'col2']
     );
   });
 
-  await t.test('honors backslash-escaped commas inside a style spec', () => {
+  it('honors backslash-escaped commas inside a style spec', () => {
     assert.deepStrictEqual(
       splitHeaderLine("date,col1{type:'decimal'\\, places: 2},col2"),
       ['date', "col1{type:'decimal', places: 2}", 'col2']
     );
   });
 
-  await t.test('honors standard CSV quoting', () => {
+  it('honors standard CSV quoting', () => {
     assert.deepStrictEqual(
       splitHeaderLine('date,"col1{type: decimal, places: 2}",col2'),
       ['date', 'col1{type: decimal, places: 2}', 'col2']
     );
   });
 
-  await t.test('unescapes doubled quotes in a quoted field', () => {
+  it('unescapes doubled quotes in a quoted field', () => {
     assert.deepStrictEqual(splitHeaderLine('date,"a ""b"" c"'), ['date', 'a "b" c']);
   });
 
-  await t.test('leaves a backslash outside a spec alone', () => {
+  it('leaves a backslash outside a spec alone', () => {
     assert.deepStrictEqual(splitHeaderLine('date,a\\b'), ['date', 'a\\b']);
   });
 });
 
-test('parseColumnStyle', async (t) => {
-  await t.test('parses each supported key', () => {
+describe('parseColumnStyle', () => {
+  it('parses each supported key', () => {
     assert.deepStrictEqual(
       parseColumnStyle("type: 'currency', places: 3, currency: eur, color: #ff0000, label: 'Net, total', plot: false"),
       {
@@ -222,18 +222,18 @@ test('parseColumnStyle', async (t) => {
     );
   });
 
-  await t.test('accepts type aliases', () => {
+  it('accepts type aliases', () => {
     assert.deepStrictEqual(parseColumnStyle('type: pct'), { type: 'percent' });
     assert.deepStrictEqual(parseColumnStyle('type: INT'), { type: 'integer' });
     assert.deepStrictEqual(parseColumnStyle('type: number'), { type: 'decimal' });
     assert.deepStrictEqual(parseColumnStyle('decimals: 4'), { places: 4 });
   });
 
-  await t.test('ignores unknown keys and invalid values', () => {
+  it('ignores unknown keys and invalid values', () => {
     assert.deepStrictEqual(parseColumnStyle('bogus: 1, type: nonsense, places: -1, places: abc'), {});
   });
 
-  await t.test('ignores a currency that is not a 3-letter code', () => {
+  it('ignores a currency that is not a 3-letter code', () => {
     assert.deepStrictEqual(parseColumnStyle('type: currency, currency: usdollar'), { type: 'currency' });
     // The default currency still formats rather than throwing.
     const formatters = analyzeColumnFormatters(
@@ -244,40 +244,40 @@ test('parseColumnStyle', async (t) => {
     assert.strictEqual(defined(formatters['val'])(1), '$1.00');
   });
 
-  await t.test('ignores entries without a value', () => {
+  it('ignores entries without a value', () => {
     assert.deepStrictEqual(parseColumnStyle('type, places:'), {});
   });
 
-  await t.test('treats plot as true unless explicitly false', () => {
+  it('treats plot as true unless explicitly false', () => {
     assert.deepStrictEqual(parseColumnStyle('plot: true'), { plot: true });
     assert.deepStrictEqual(parseColumnStyle('plot: FALSE'), { plot: false });
   });
 });
 
-test('parseColumnHeader', async (t) => {
-  await t.test('returns the header unchanged when there is no spec', () => {
+describe('parseColumnHeader', () => {
+  it('returns the header unchanged when there is no spec', () => {
     assert.deepStrictEqual(parseColumnHeader(' val1 '), { name: ' val1 ', style: {} });
   });
 
-  await t.test('separates the name from the spec', () => {
+  it('separates the name from the spec', () => {
     assert.deepStrictEqual(parseColumnHeader('col1 {type: decimal, places: 2}'), {
       name: 'col1',
       style: { type: 'decimal', places: 2 },
     });
   });
 
-  await t.test('treats an empty spec as no styling', () => {
+  it('treats an empty spec as no styling', () => {
     assert.deepStrictEqual(parseColumnHeader('col1{}'), { name: 'col1', style: {} });
   });
 });
 
-test('extractColumnStyles', async (t) => {
-  await t.test('leaves a CSV without specs untouched', () => {
+describe('extractColumnStyles', () => {
+  it('leaves a CSV without specs untouched', () => {
     const csv = 'date,val1\n2023-01-01,10';
     assert.deepStrictEqual(extractColumnStyles(csv), { csv, columnStyles: {} });
   });
 
-  await t.test('strips specs from the header line', () => {
+  it('strips specs from the header line', () => {
     const { csv, columnStyles } = extractColumnStyles(
       "date,col1{type:'decimal'\\, places: 2},col2\n2026-01-01,0.7,foo"
     );
@@ -285,28 +285,28 @@ test('extractColumnStyles', async (t) => {
     assert.deepStrictEqual(columnStyles, { col1: { type: 'decimal', places: 2 } });
   });
 
-  await t.test('preserves CRLF line endings', () => {
+  it('preserves CRLF line endings', () => {
     const { csv } = extractColumnStyles('date,col1{places: 2}\r\n2026-01-01,0.7\r\n');
     assert.strictEqual(csv, 'date,col1\r\n2026-01-01,0.7\r\n');
   });
 
-  await t.test('re-quotes a column name that needs it', () => {
+  it('re-quotes a column name that needs it', () => {
     const { csv, columnStyles } = extractColumnStyles('date,"a,b"{places: 2}\n2026-01-01,0.7');
     assert.strictEqual(csv, 'date,"a,b"\n2026-01-01,0.7');
     assert.deepStrictEqual(columnStyles, { 'a,b': { places: 2 } });
   });
 
-  await t.test('handles a header-only CSV', () => {
+  it('handles a header-only CSV', () => {
     const { csv, columnStyles } = extractColumnStyles('date,col1{places: 2}');
     assert.strictEqual(csv, 'date,col1');
     assert.deepStrictEqual(columnStyles, { col1: { places: 2 } });
   });
 });
 
-test('spreadDuplicateDates', async (t) => {
+describe('spreadDuplicateDates', () => {
   const msPerDay = 24 * 60 * 60 * 1000;
 
-  await t.test('leaves unique dates unchanged', () => {
+  it('leaves unique dates unchanged', () => {
     const d1 = new Date('2023-01-01');
     const d2 = new Date('2023-01-02');
     const data: DataPoint[] = [{ date: d1, val: 1 }, { date: d2, val: 2 }];
@@ -315,7 +315,7 @@ test('spreadDuplicateDates', async (t) => {
     assert.strictEqual(defined(result[1]).date.getTime(), d2.getTime());
   });
 
-  await t.test('spreads two points on the same date 12 hours apart', () => {
+  it('spreads two points on the same date 12 hours apart', () => {
     const base = new Date('2023-01-01');
     const data: DataPoint[] = [{ date: base, val: 1 }, { date: base, val: 2 }];
     const result = spreadDuplicateDates(data);
@@ -323,7 +323,7 @@ test('spreadDuplicateDates', async (t) => {
     assert.strictEqual(defined(result[1]).date.getTime(), base.getTime() + msPerDay / 2);
   });
 
-  await t.test('spreads three points on the same date 8 hours apart', () => {
+  it('spreads three points on the same date 8 hours apart', () => {
     const base = new Date('2023-01-01');
     const data: DataPoint[] = [
       { date: base, val: 1 },
@@ -336,7 +336,7 @@ test('spreadDuplicateDates', async (t) => {
     assert.strictEqual(defined(result[2]).date.getTime(), base.getTime() + Math.floor(2 * msPerDay / 3));
   });
 
-  await t.test('does not mutate the original data', () => {
+  it('does not mutate the original data', () => {
     const base = new Date('2023-01-01');
     const data: DataPoint[] = [{ date: base, val: 1 }, { date: base, val: 2 }];
     spreadDuplicateDates(data);
@@ -344,7 +344,7 @@ test('spreadDuplicateDates', async (t) => {
     assert.strictEqual(defined(data[1]).date.getTime(), base.getTime());
   });
 
-  await t.test('handles mixed: some dates unique, some duplicated', () => {
+  it('handles mixed: some dates unique, some duplicated', () => {
     const d1 = new Date('2023-01-01');
     const d2 = new Date('2023-01-02');
     const data: DataPoint[] = [
@@ -359,8 +359,8 @@ test('spreadDuplicateDates', async (t) => {
   });
 });
 
-test('processCSV', async (t) => {
-  await t.test('converts CSV string to formatted data points', () => {
+describe('processCSV', () => {
+  it('converts CSV string to formatted data points', () => {
     const csv = `date,pct_change,amount,category
 2023-01-01,0.15,45.5,High
 2023-01-02,-0.8,-99.25,Low`;
@@ -381,7 +381,7 @@ test('processCSV', async (t) => {
     assert.strictEqual(defined(formattedData[1]).category, 'Low');
   });
 
-  await t.test('handles markdown links', () => {
+  it('handles markdown links', () => {
     const csv = `date,link\n2023-01-01,[Google](https://google.com)`;
     const { formattedData } = processCSV(csv);
 
@@ -390,20 +390,20 @@ test('processCSV', async (t) => {
     assert.strictEqual(linkData.url.toString(), 'https://google.com/');
   });
 
-  await t.test('handles invalid markdown links as strings', () => {
+  it('handles invalid markdown links as strings', () => {
     const csv = `date,link\n2023-01-01,[Invalid](not-a-url)`;
     const { formattedData } = processCSV(csv);
 
     assert.strictEqual(defined(formattedData[0]).link, '[Invalid](not-a-url)');
   });
 
-  await t.test('handles empty CSV', () => {
+  it('handles empty CSV', () => {
     const { formattedData, columns } = processCSV('');
     assert.strictEqual(formattedData.length, 0);
     assert.strictEqual(columns.length, 0);
   });
 
-  await t.test('applies styles from the column headers', () => {
+  it('applies styles from the column headers', () => {
     const csv = `date,col1{type:'decimal'\\, places: 2},col2{label: Category},col3{plot: false}
 2026-01-01,0.7,foo,3`;
 
