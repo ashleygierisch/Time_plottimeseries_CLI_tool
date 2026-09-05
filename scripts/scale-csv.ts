@@ -1,44 +1,24 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-
 import { fileURLToPath } from 'node:url';
 
+import { scaleCSV } from './scaleCSV.ts';
+
+// The divisor varies per cell so the rescaled series keep their shape without
+// being an exact multiple of the original.
+const MIN_DIVISOR = 9;
+const MAX_DIVISOR = 11;
+
 const dirName = path.dirname(fileURLToPath(import.meta.url));
-const csvPath = path.resolve(dirName, '..', 'public', 'data.csv');
-const csvContent = fs.readFileSync(csvPath, 'utf-8');
+// Rewrites the file in place, which is the point: this exists to tweak the
+// committed sample. Pass a path to point it somewhere else.
+const csvPath = process.argv[2] ?? path.resolve(dirName, '..', 'public', 'data.csv');
 
-const lines = csvContent.trim().split('\n');
-const dataLines = lines.slice(1);
+const scaled = scaleCSV(
+  fs.readFileSync(csvPath, 'utf-8'),
+  () => Math.random() * (MAX_DIVISOR - MIN_DIVISOR) + MIN_DIVISOR
+);
 
-function randomBetween(min: number, max: number): number {
-  return Math.random() * (max - min) + min;
-}
+fs.writeFileSync(csvPath, scaled);
 
-function roundTo3Decimals(num: number): number {
-  return Math.round(num * 1000) / 1000;
-}
-
-const processedLines = dataLines.map((line: string, index: number): string => {
-  if (index === 0) {
-    return line.split(',').map((_, i) => i == 0 ? 'date' : `total_${i}`).join(',');
-  }
-  return line.split(',').map((cell: string, index: number): string => {
-    if (index === 0) {
-      return cell;
-    }
-    if (cell === '0') {
-      return cell;
-    }
-    const num = parseFloat(cell);
-    if (isNaN(num)) {
-      return cell;
-    }
-    const divisor = randomBetween(9, 11);
-    const result = roundTo3Decimals(num / divisor);
-    return result.toString();
-  }).join(',');
-});
-
-fs.writeFileSync(csvPath, processedLines.join('\n'));
-
-console.log('CSV file processed and saved.');
+console.error(`Rescaled ${csvPath}`);
