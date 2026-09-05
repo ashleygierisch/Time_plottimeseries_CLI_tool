@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { ChartOptions, getChartOptions, parseNumericOption } from './chartOptions.ts';
+import { type ChartOptions, getChartOptions, parseNumericOption } from './chartOptions.ts';
 
 function windowWith(href: string, injected?: ChartOptions): Window {
   return { location: { href }, __CHART_OPTIONS__: injected } as unknown as Window;

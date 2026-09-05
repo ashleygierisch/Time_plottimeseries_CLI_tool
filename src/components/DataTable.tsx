@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { FormattedDataPoint, LinkData } from '../dataProcessing';
+import type { FormattedDataPoint, LinkData } from '../dataProcessing';
 
 interface DataTableProps {
   formattedData: FormattedDataPoint[];
