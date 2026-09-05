@@ -5,6 +5,7 @@ import { TimeSeriesChart } from './components/TimeSeriesChart.tsx';
 import { HoverDetails } from './components/HoverDetails.tsx';
 import { DataTable } from './components/DataTable.tsx';
 import { getCSVData } from './data.ts';
+import { cssVar } from './theme.ts';
 import { type ChartOptions, getChartOptions } from './chartOptions.ts';
 
 declare global {
@@ -112,7 +113,7 @@ function App() {
         position: isSticky ? 'sticky' : 'static',
         top: 0,
         zIndex: 100,
-        backgroundColor: '#000000' // Ensure opacity
+        backgroundColor: cssVar('ground') // Ensure opacity
       }}>
         <TimeSeriesChart
           data={displayData}

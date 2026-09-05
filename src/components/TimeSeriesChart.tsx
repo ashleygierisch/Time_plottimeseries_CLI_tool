@@ -3,6 +3,7 @@ import * as d3 from 'd3';
 import { type ColumnStyles, type DataPoint, isSeriesColumn } from '../dataProcessing.ts';
 import type { ChartOptions } from '../chartOptions.ts';
 import { subdivideGridPositions } from '../gridLines.ts';
+import { cssVar, THEME } from '../theme.ts';
 
 const CLIP_ID = 'plot-area-clip';
 const GRADIENT_ID = 'plot-area-gradient';
@@ -16,7 +17,10 @@ const MAJOR_TICKS = 10;
 /** Fine grid lines per major interval, engineering-paper style. */
 const GRID_DIVISIONS = 5;
 
-const GRID_COLOR = '#cfe0f0';
+// d3 writes SVG presentation attributes, and `var()` is not resolved in one,
+// so the plot takes literals from THEME while the JSX below takes custom
+// properties. theme.test.ts is what keeps the two spellings the same colour.
+const GRID_COLOR = THEME.gridInk;
 
 /** Rescaling and isolating a series, as clicking a header does. */
 const UPDATE_MS = 750;
@@ -138,9 +142,9 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
       const gradient = defs.append('linearGradient')
         .attr('id', GRADIENT_ID)
         .attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', 1);
-      gradient.append('stop').attr('offset', '0%').attr('stop-color', '#1b2029');
-      gradient.append('stop').attr('offset', '55%').attr('stop-color', '#0b0d11');
-      gradient.append('stop').attr('offset', '100%').attr('stop-color', '#000000');
+      gradient.append('stop').attr('offset', '0%').attr('stop-color', THEME.plotTop);
+      gradient.append('stop').attr('offset', '55%').attr('stop-color', THEME.plotMid);
+      gradient.append('stop').attr('offset', '100%').attr('stop-color', THEME.plotBottom);
 
       // Order matters for layering
       g.append('rect').attr('class', 'plot-background').attr('fill', `url(#${GRADIENT_ID})`);
@@ -154,7 +158,7 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
       defs.append('clipPath').attr('id', CLIP_ID).append('rect');
       g.append('g').attr('class', 'lines-group').attr('clip-path', `url(#${CLIP_ID})`);
       g.append('line').attr('class', 'cursor-rule')
-        .attr('stroke', 'white').attr('stroke-width', 1).attr('stroke-dasharray', '4 4').style('opacity', 0);
+        .attr('stroke', THEME.cursor).attr('stroke-width', 1).attr('stroke-dasharray', '4 4').style('opacity', 0);
       g.append('rect').attr('class', 'hover-overlay')
         .attr('width', innerWidth).attr('height', innerHeight).attr('fill', 'transparent');
     }
@@ -323,15 +327,15 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     <div style={{
       position: 'relative', // Changed from internal stickiness
       zIndex: 90,
-      background: '#000000', // Match body bg
-      borderBottom: '1px solid #333',
-      color: '#ffffff'
+      background: cssVar('ground'), // Match body bg
+      borderBottom: `1px solid ${cssVar('rule')}`,
+      color: cssVar('text')
     }}>
       <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0.5rem', gap: '1rem', alignItems: 'center' }}>
-        <label style={{ fontSize: '0.8rem', cursor: 'pointer', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+        <label style={{ fontSize: '0.8rem', cursor: 'pointer', color: cssVar('text'), display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
           <input type="checkbox" checked={isSticky} onChange={onToggleSticky} /> Sticky Plot
         </label>
-        <label style={{ fontSize: '0.8rem', cursor: 'pointer', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+        <label style={{ fontSize: '0.8rem', cursor: 'pointer', color: cssVar('text'), display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
           <input type="checkbox" checked={spreadDates} onChange={onToggleSpreadDates} /> Spread Duplicate Dates
         </label>
         <button

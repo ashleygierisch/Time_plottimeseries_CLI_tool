@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { isDateColumn, type FormattedDataPoint } from '../dataProcessing.ts';
 import { renderCellValue } from './CellValue.tsx';
+import { cssVar } from '../theme.ts';
 
 interface DataTableProps {
   formattedData: FormattedDataPoint[];
@@ -40,7 +41,11 @@ export const DataTable: React.FC<DataTableProps> = ({ formattedData, columns, ho
           return (
             <tr
               key={row.date.getTime()}
-              style={{ backgroundColor: isHighlighted ? '#333' : (i % 2 === 0 ? '#0d0d0d' : '#000000') }}
+              style={{
+                backgroundColor: isHighlighted
+                  ? cssVar('rowHover')
+                  : cssVar(i % 2 === 0 ? 'groundAlt' : 'ground'),
+              }}
               onMouseEnter={() => onHover(row.date)}
             >
               {columns.map(col => {

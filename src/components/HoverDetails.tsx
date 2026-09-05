@@ -2,6 +2,7 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 're
 import { type ColumnStyles, type FormattedDataPoint, formatColumnName, isDateColumn, isSeriesColumn } from '../dataProcessing.ts';
 import { apportionColumnWidths } from '../columnWidths.ts';
 import { cellText, EMPTY_VALUE, renderCellValue } from './CellValue.tsx';
+import { cssVar } from '../theme.ts';
 
 interface HoverDetailsProps {
   formattedData: FormattedDataPoint[];
@@ -118,10 +119,10 @@ export const HoverDetails: React.FC<HoverDetailsProps> = ({
   return (
     <div ref={containerRef} className="hover-details" style={{
       padding: '1rem',
-      background: '#111111',
-      borderBottom: '1px solid #333',
+      background: cssVar('panel'),
+      borderBottom: `1px solid ${cssVar('rule')}`,
       overflowX: 'auto',
-      color: '#ffffff'
+      color: cssVar('text')
     }}>
       <table className="data-table" style={{ fontSize: '0.9rem', tableLayout: columnWidths ? 'fixed' : 'auto' }}>
         {columnWidths && (
@@ -145,7 +146,7 @@ export const HoverDetails: React.FC<HoverDetailsProps> = ({
                     cursor: isSeries ? 'pointer' : undefined,
                     opacity: isSeries && isolatedSeries && isolatedSeries !== col ? 0.5 : 1,
                     textDecoration: isSeries && isolatedSeries === col ? 'underline' : 'none',
-                    borderBottom: '1px solid #555'
+                    borderBottom: `1px solid ${cssVar('ruleStrong')}`
                   }}
                   onClick={() => isSeries && onSelectSeries(col)}
                 >

@@ -1,4 +1,5 @@
 import { isLinkData, type LinkData } from '../dataProcessing.ts';
+import { cssVar } from '../theme.ts';
 
 /**
  * One cell of the formatted data, as both tables see it. `undefined` is
@@ -9,7 +10,7 @@ export type CellValue = string | Date | LinkData | undefined;
 /** Shown in place of a value a row does not have. */
 export const EMPTY_VALUE = '-';
 
-const LINK_COLOR = '#4da6ff';
+const LINK_COLOR = cssVar('link');
 
 /**
  * The text a cell shows, with no markup around it. The hover details sizes its
