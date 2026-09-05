@@ -49,6 +49,7 @@ export function parseArgs(args: string[]): CLIOptions {
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
+    if (arg === undefined) continue;
 
     if (arg !== '-h' && !arg.startsWith('--')) {
       if (csvPath == null) csvPath = arg;
@@ -64,7 +65,7 @@ export function parseArgs(args: string[]): CLIOptions {
     let value = option.value;
     if (value == null && i + 1 < args.length) {
       i++;
-      value = args[i];
+      value = args[i] ?? null;
     }
 
     if (option.name === '--headers-file') {

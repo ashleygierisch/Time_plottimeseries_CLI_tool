@@ -58,7 +58,7 @@ describe('renderReport content security policy', () => {
   function policy(html: string): string {
     const meta = /<meta http-equiv="Content-Security-Policy" content="([^"]*)" \/>/.exec(html);
     assert.ok(meta, 'no Content-Security-Policy meta tag in the report');
-    return meta[1];
+    return meta[1] ?? '';
   }
 
   it('hashes every inline block it emits, so the browser runs all of them', () => {
@@ -93,7 +93,7 @@ describe('renderReport content security policy', () => {
     const inlined = /<script>(window\.__INITIAL_CSV__[\s\S]*?)<\/script>/.exec(html);
 
     assert.ok(inlined, 'no data script in the report');
-    assert.ok(policy(html).includes(cspHash(inlined[1])));
+    assert.ok(policy(html).includes(cspHash(inlined[1] ?? '')));
   });
 
   it('comes before the tags it governs', () => {

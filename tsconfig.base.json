@@ -13,6 +13,11 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
+    // Indexing an array or a Record can miss, and this code indexes constantly
+    // -- CSV rows by column position, formatters by column name, grid majors by
+    // neighbour. Without this, every one of those reads as a definite value and
+    // a miss surfaces as `undefined` several frames away from the lookup.
+    "noUncheckedIndexedAccess": true,
     // An optional property and a property explicitly set to `undefined` are
     // different things, and the CLI leans on the difference: `{ yMax: undefined }`
     // is not the same chart as `{}` once it is serialised into a report.

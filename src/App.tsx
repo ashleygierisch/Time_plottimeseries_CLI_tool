@@ -76,7 +76,9 @@ function App() {
 
   const displayFormattedData = useMemo(() => {
     if (!spreadDates) return formattedData;
-    return formattedData.map((fd, i) => ({ ...fd, date: displayData[i].date }));
+    // The two arrays are built from the same rows, so the lookup always hits;
+    // keeping the row's own date if it ever did not is better than throwing.
+    return formattedData.map((fd, i) => ({ ...fd, date: displayData[i]?.date ?? fd.date }));
   }, [formattedData, displayData, spreadDates]);
 
   // Generate Colors
