@@ -38,6 +38,25 @@ export default tseslint.config(
           { from: 'package', package: 'node:test', name: ['describe', 'it', 'test'] },
         ],
       }],
+      'no-restricted-imports': ['error', {
+        patterns: [
+          {
+            // `node:fs` and `fs` resolve to the same module, but only the
+            // prefixed form says at a glance that it is not a package
+            // somebody could publish under that name.
+            regex: '^(assert|buffer|child_process|crypto|events|fs|http|https|net|os|path|process|stream|test|url|util|zlib)(/|$)',
+            message: 'Import Node built-ins with the `node:` prefix.',
+          },
+          {
+            // Both bundlers here resolve an extensionless relative import,
+            // and `node scripts/whatever.ts` does not. Writing the extension
+            // always is the form that works everywhere, so nothing depends on
+            // which tool happens to load a file.
+            regex: '^\\.\\.?(/.*)?/[^/.]+$',
+            message: 'Give relative imports their file extension: `./foo.ts`, not `./foo`.',
+          },
+        ],
+      }],
     },
   },
   {

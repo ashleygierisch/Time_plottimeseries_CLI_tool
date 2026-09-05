@@ -1,4 +1,4 @@
-import { isLinkData, type LinkData } from '../dataProcessing';
+import { isLinkData, type LinkData } from '../dataProcessing.ts';
 
 /**
  * One cell of the formatted data, as both tables see it. `undefined` is

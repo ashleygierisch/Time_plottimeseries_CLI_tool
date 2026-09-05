@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { getCSVData } from './data';
+import { getCSVData } from './data.ts';
 
 const TEST_CSV = `date,pct_change,amount,category
 2023-01-01,0.15,45.5,High

@@ -10,11 +10,11 @@
  * The sandbox is verified rather than assumed: `assertNoEgress` tries a real
  * connection and fails the run if it succeeds.
  */
-import { spawnSync } from 'child_process';
-import * as fs from 'fs';
-import * as net from 'net';
-import * as path from 'path';
-import { fileURLToPath } from 'url';
+import { spawnSync } from 'node:child_process';
+import * as fs from 'node:fs';
+import * as net from 'node:net';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { cspHash } from './securityHeaders.ts';
 

@@ -1,11 +1,11 @@
 import { useEffect, useState, useMemo } from 'react';
 import * as d3 from 'd3';
-import { processCSV, spreadDuplicateDates, type ColumnStyles, type DataPoint, type FormattedDataPoint } from './dataProcessing';
-import { TimeSeriesChart } from './components/TimeSeriesChart';
-import { HoverDetails } from './components/HoverDetails';
-import { DataTable } from './components/DataTable';
-import { getCSVData } from './data';
-import { type ChartOptions, getChartOptions } from './chartOptions';
+import { processCSV, spreadDuplicateDates, type ColumnStyles, type DataPoint, type FormattedDataPoint } from './dataProcessing.ts';
+import { TimeSeriesChart } from './components/TimeSeriesChart.tsx';
+import { HoverDetails } from './components/HoverDetails.tsx';
+import { DataTable } from './components/DataTable.tsx';
+import { getCSVData } from './data.ts';
+import { type ChartOptions, getChartOptions } from './chartOptions.ts';
 
 declare global {
   interface Window {
