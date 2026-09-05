@@ -346,12 +346,27 @@ export function spreadDuplicateDates(data: DataPoint[]): DataPoint[] {
   });
 }
 
-export function processCSV(csvString: string): {
-  data: DataPoint[],
-  formattedData: FormattedDataPoint[],
-  columns: string[],
-  columnStyles: ColumnStyles,
-} {
+/**
+ * Everything a CSV yields. These four move together -- a set of columns only
+ * describes the rows it was parsed alongside -- so they are one value rather
+ * than four.
+ */
+export interface ProcessedCSV {
+  data: DataPoint[];
+  formattedData: FormattedDataPoint[];
+  columns: string[];
+  columnStyles: ColumnStyles;
+}
+
+/** A parsed nothing, for before the first CSV arrives. */
+export const EMPTY_CSV: ProcessedCSV = {
+  data: [],
+  formattedData: [],
+  columns: [],
+  columnStyles: {},
+};
+
+export function processCSV(csvString: string): ProcessedCSV {
   const { data, columns, columnStyles } = parseCSV(csvString);
 
   if (data.length === 0) {

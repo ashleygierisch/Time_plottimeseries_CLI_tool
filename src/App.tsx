@@ -1,6 +1,6 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import * as d3 from 'd3';
-import { processCSV, spreadDuplicateDates, type ColumnStyles, type DataPoint, type FormattedDataPoint } from './dataProcessing.ts';
+import { EMPTY_CSV, processCSV, spreadDuplicateDates, type ProcessedCSV } from './dataProcessing.ts';
 import { TimeSeriesChart } from './components/TimeSeriesChart.tsx';
 import { HoverDetails } from './components/HoverDetails.tsx';
 import { DataTable } from './components/DataTable.tsx';
@@ -15,10 +15,11 @@ declare global {
 }
 
 function App() {
-  const [data, setData] = useState<DataPoint[]>([]);
-  const [formattedData, setFormattedData] = useState<FormattedDataPoint[]>([]);
-  const [columns, setColumns] = useState<string[]>([]);
-  const [columnStyles, setColumnStyles] = useState<ColumnStyles>({});
+  // The four parts of a parsed CSV are always replaced together, so they are
+  // one piece of state. Held apart, a render could catch new columns against
+  // the previous rows.
+  const [dataset, setDataset] = useState<ProcessedCSV>(EMPTY_CSV);
+  const { data, formattedData, columns, columnStyles } = dataset;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,34 +35,38 @@ function App() {
   const [isSticky, setIsSticky] = useState(false);
   const [spreadDates, setSpreadDates] = useState(true);
 
-  // Load Data
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const csvString = await getCSVData(window, async () => {
-          const response = await fetch('/data.csv');
-          if (!response.ok) throw new Error(`Failed to fetch data: ${response.statusText}`);
-          return response.text();
-        });
+  // Every CSV arrives through here, however it was fetched, so that one CSV is
+  // rejected and one view is reset the same way whether it came from the page
+  // load or from the upload button.
+  const loadCSV = useCallback(async (readCSV: () => Promise<string>) => {
+    setLoading(true);
+    setError(null);
 
-        const result = processCSV(csvString);
-        setData(result.data);
-        setFormattedData(result.formattedData);
-        setColumns(result.columns);
-        setColumnStyles(result.columnStyles);
+    try {
+      const result = processCSV(await readCSV());
+      if (result.data.length === 0) throw new Error('No valid data found in CSV');
 
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError(String(err));
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-    void loadData();
+      setDataset(result);
+      setIsolatedSeries(null);
+      setHoveredDate(null);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  // Fetching the page's own CSV is the external system this effect exists to
+  // read from, and `loadCSV` raises the loading flag before it awaits
+  // anything. That is the render this is here to cause, not a cascade.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadCSV(() => getCSVData(window, async () => {
+      const response = await fetch('/data.csv');
+      if (!response.ok) throw new Error(`Failed to fetch data: ${response.statusText}`);
+      return response.text();
+    }));
+  }, [loadCSV]);
 
   // Apply date spreading
   const displayData = useMemo(() => {
@@ -91,33 +96,9 @@ function App() {
     setIsolatedSeries(prev => prev === series ? null : series);
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const csvString = await file.text();
-      const result = processCSV(csvString);
-
-      if (result.data.length === 0) {
-        throw new Error('No valid data found in CSV');
-      }
-
-      setData(result.data);
-      setFormattedData(result.formattedData);
-      setColumns(result.columns);
-      setColumnStyles(result.columnStyles);
-      setIsolatedSeries(null);
-      setHoveredDate(null);
-
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setLoading(false);
-    }
+    if (file) void loadCSV(() => file.text());
   };
 
   if (loading) return <div>Loading...</div>;
@@ -142,7 +123,7 @@ function App() {
           spreadDates={spreadDates}
           onToggleSpreadDates={() => setSpreadDates(!spreadDates)}
           columnColors={columnColors}
-          onFileUpload={event => void handleFileUpload(event)}
+          onFileUpload={handleFileUpload}
           columnStyles={columnStyles}
           chartOptions={chartOptions}
         />
