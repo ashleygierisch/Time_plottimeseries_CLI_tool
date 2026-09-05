@@ -4,6 +4,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { contentType, resolveStaticFile } from './staticFiles.ts';
+
 const dirName = path.dirname(fileURLToPath(import.meta.url));
 const PORT = 3000;
 // Loopback only. The dev server reads files off disk with no authentication,
@@ -11,13 +13,6 @@ const PORT = 3000;
 const HOST = '127.0.0.1';
 const ROOT_DIR = path.resolve(dirName, '..');
 const PUBLIC_DIR = path.resolve(ROOT_DIR, 'public');
-
-/** Guards against a request path escaping the directory it is served from. */
-function isInside(directory: string, filePath: string): boolean {
-  const relative = path.relative(directory, filePath);
-  return relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative);
-}
-
 
 async function start(): Promise<void> {
   const clients: http.ServerResponse[] = [];
@@ -43,9 +38,7 @@ async function start(): Promise<void> {
   await ctx.watch();
 
   const server = http.createServer((req, res) => {
-    const parsedUrl = new URL(req.url ?? '', `http://${req.headers.host}`);
-    const pathname = parsedUrl.pathname;
-    let filePath: string;
+    const { pathname } = new URL(req.url ?? '', `http://${req.headers.host}`);
 
     if (pathname === '/esbuild') {
       res.writeHead(200, {
@@ -55,33 +48,24 @@ async function start(): Promise<void> {
       });
       clients.push(res);
       return;
-    } else if (pathname === '/dist/app.js.map') { // Sourcemap
-      filePath = path.resolve(ROOT_DIR, 'dist', 'app.js.map');
-    } else if (pathname === '/dist/app.css') { // CSS Bundle
-      filePath = path.resolve(ROOT_DIR, 'dist', 'app.css');
-    } else {
-      filePath = path.join(ROOT_DIR, pathname === '/' ? 'index.html' : pathname);
     }
 
-    // Check public if not found in root
-    if (!fs.existsSync(filePath)) {
-      filePath = path.join(PUBLIC_DIR, pathname);
-    }
+    // The repository root first, then public/. The dev bundle under dist/ needs
+    // no special case: it is already inside the root.
+    const resolved = resolveStaticFile(pathname, [ROOT_DIR, PUBLIC_DIR], fs.existsSync);
 
-    if (!isInside(ROOT_DIR, filePath)) {
+    if (resolved.kind === 'forbidden') {
       res.writeHead(403);
       res.end('Forbidden');
       return;
     }
+    if (resolved.kind === 'not-found') {
+      res.writeHead(404);
+      res.end('Not found');
+      return;
+    }
 
-    const ext = path.extname(filePath);
-    const mimeTypes: Record<string, string> = {
-      '.html': 'text/html',
-      '.js': 'text/javascript',
-      '.css': 'text/css',
-      '.csv': 'text/csv',
-      '.map': 'application/json',
-    };
+    const { filePath } = resolved;
 
     fs.readFile(filePath, (err, content) => {
       if (err) {
@@ -89,14 +73,13 @@ async function start(): Promise<void> {
         res.end('Not found');
         return;
       }
-      res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'text/plain' });
-      if (ext === '.html') {
+      res.writeHead(200, { 'Content-Type': contentType(filePath) });
+      if (path.extname(filePath) === '.html') {
         res.end(content.toString('utf-8') + '<script>new EventSource("/esbuild").onmessage = () => location.reload()</script>');
       } else {
         res.end(content);
       }
     });
-
   });
 
   server.listen(PORT, HOST, () => console.log(`Listening on http://localhost:${PORT}`));
