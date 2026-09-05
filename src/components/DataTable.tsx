@@ -56,7 +56,7 @@ export const DataTable: React.FC<DataTableProps> = ({ formattedData, columns, ho
              const isHighlighted = hoveredDate && row.date.getTime() === hoveredDate.getTime();
              return (
                <tr
-                 key={i}
+                 key={row.date.getTime()}
                  style={{ backgroundColor: isHighlighted ? '#333' : (i % 2 === 0 ? '#0d0d0d' : '#000000') }}
                  onMouseEnter={() => onHover(row.date)}
                >

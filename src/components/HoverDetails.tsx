@@ -116,6 +116,10 @@ export const HoverDetails: React.FC<HoverDetailsProps> = ({
       Array.from(headerRow.cells, cell => cell.getBoundingClientRect().width)
     );
     if (widths.length !== columns.length) return;
+    // Rendered geometry cannot be known before a render, so measuring and
+    // storing it is the point of this effect rather than an accident. The
+    // `columnWidths` guard above keeps it to a single pass per measureKey.
+    // eslint-disable-next-line @eslint-react/set-state-in-effect
     setMeasurement({ key: measureKey, containerWidth: container.clientWidth, widths });
   }, [columnWidths, measureKey, columns.length]);
 
