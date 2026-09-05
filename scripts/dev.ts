@@ -1,8 +1,8 @@
 import * as esbuild from 'esbuild';
-import * as http from 'http';
-import * as fs from 'fs';
-import * as path from 'path';
-import { fileURLToPath } from 'url';
+import * as http from 'node:http';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const dirName = path.dirname(fileURLToPath(import.meta.url));
 const PORT = 3000;

@@ -1,7 +1,7 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { type ColumnStyles, type FormattedDataPoint, formatColumnName, isDateColumn, isSeriesColumn } from '../dataProcessing';
-import { apportionColumnWidths } from '../columnWidths';
-import { cellText, EMPTY_VALUE, renderCellValue } from './CellValue';
+import { type ColumnStyles, type FormattedDataPoint, formatColumnName, isDateColumn, isSeriesColumn } from '../dataProcessing.ts';
+import { apportionColumnWidths } from '../columnWidths.ts';
+import { cellText, EMPTY_VALUE, renderCellValue } from './CellValue.tsx';
 
 interface HoverDetailsProps {
   formattedData: FormattedDataPoint[];

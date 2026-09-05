@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
-import { isDateColumn, type FormattedDataPoint } from '../dataProcessing';
-import { renderCellValue } from './CellValue';
+import { isDateColumn, type FormattedDataPoint } from '../dataProcessing.ts';
+import { renderCellValue } from './CellValue.tsx';
 
 interface DataTableProps {
   formattedData: FormattedDataPoint[];
