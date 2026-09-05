@@ -24,6 +24,8 @@ const UPDATE_MS = 750;
 /** The marker stroke that draws each series in when it first appears. */
 const DRAW_MS = 1500;
 
+const MARGIN = { top: 20, right: 30, bottom: 30, left: 80 };
+
 interface TimeSeriesChartProps {
   data: DataPoint[];
   columns: string[];
@@ -79,8 +81,43 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     return () => observer.disconnect();
   }, []);
 
+  const innerWidth = dimensions.width - MARGIN.left - MARGIN.right;
+  const innerHeight = dimensions.height - MARGIN.top - MARGIN.bottom;
 
+  // The scales are shared by the two effects below -- the one that draws the
+  // plot and the one that moves the cursor rule across it -- so they are
+  // computed once here rather than inside either.
+  const x = useMemo(
+    () => d3.scaleTime()
+      .domain(d3.extent(data, d => d.date) as [Date, Date])
+      .range([0, innerWidth]),
+    [data, innerWidth]
+  );
 
+  const y = useMemo(() => {
+    let yMax: number;
+    let yMin: number;
+    if (isolatedSeries) {
+      yMax = d3.max(data, d => d[isolatedSeries] as number) || 0;
+      yMin = d3.min(data, d => d[isolatedSeries] as number) || 0;
+    } else {
+      yMax = d3.max(data, d => Math.max(...plottableColumns.map(c => d[c] as number))) || 0;
+      yMin = d3.min(data, d => Math.min(...plottableColumns.map(c => d[c] as number))) || 0;
+    }
+    if (yMin > 0) {
+      yMin = 0;
+    }
+
+    // Explicit chart settings win over the data-derived domain.
+    if (chartOptions.yMax != null) yMax = chartOptions.yMax;
+    if (chartOptions.yMin != null) yMin = chartOptions.yMin;
+
+    return d3.scaleLinear().domain([yMin, yMax]).range([innerHeight, 0]);
+  }, [data, plottableColumns, isolatedSeries, chartOptions, innerHeight]);
+
+  // Draws the plot. Deliberately does not depend on `hoveredDate`: moving the
+  // pointer must not re-enter this, or every mouse move would restart the
+  // 750ms transitions below and rebuild every path.
   useEffect(() => {
     if (!containerRef.current || !svgRef.current || !data.length) return;
 
@@ -89,10 +126,6 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     const width = dimensions.width;
     const height = dimensions.height;
     if (width === 0 || height === 0) return;
-
-    const margin = { top: 20, right: 30, bottom: 30, left: 80 };
-    const innerWidth = width - margin.left - margin.right;
-    const innerHeight = height - margin.top - margin.bottom;
 
     // 1. Setup Groups (Idempotent)
     let g = svg.select<SVGGElement>('g.main-group');
@@ -127,7 +160,7 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     }
 
     svg.attr('width', width).attr('height', height);
-    g.attr('transform', `translate(${margin.left},${margin.top})`);
+    g.attr('transform', `translate(${MARGIN.left},${MARGIN.top})`);
 
     // Update axes positions if dimensions changed
     g.select<SVGGElement>('.axis-x').attr('transform', `translate(0,${innerHeight})`);
@@ -137,34 +170,7 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     svg.select(`#${CLIP_ID} rect`)
       .attr('x', 0).attr('y', 0).attr('width', innerWidth).attr('height', innerHeight);
 
-    // 2. Scales
-    const x = d3.scaleTime()
-      .domain(d3.extent(data, d => d.date) as [Date, Date])
-      .range([0, innerWidth]);
-
-    // Calculate Y domain based on isolation
-    let yMax: number;
-    let yMin: number;
-    if (isolatedSeries) {
-      yMax = d3.max(data, d => d[isolatedSeries] as number) || 0;
-      yMin = d3.min(data, d => d[isolatedSeries] as number) || 0;
-    } else {
-      yMax = d3.max(data, d => Math.max(...plottableColumns.map(c => d[c] as number))) || 0;
-      yMin = d3.min(data, d => Math.min(...plottableColumns.map(c => d[c] as number))) || 0;
-    }
-    if (yMin > 0) {
-      yMin = 0;
-    }
-
-    // Explicit chart settings win over the data-derived domain.
-    if (chartOptions.yMax != null) yMax = chartOptions.yMax;
-    if (chartOptions.yMin != null) yMin = chartOptions.yMin;
-
-    const y = d3.scaleLinear()
-      .domain([yMin, yMax])
-      .range([innerHeight, 0]);
-
-    // 3. Transitions
+    // 2. Transitions
     // One transition shared by every update below, so they move together. The
     // cast widens the element type: `.transition(t)` is called on selections of
     // several different element types, and each wants a transition it can
@@ -272,8 +278,9 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     // Exit
     lines.exit().remove();
 
-    // 5. Interactions (Cursor & Overlay)
-    // Update overlay handlers to use fresh closure variables (data, scales)
+    // 4. Interactions
+    // Re-bound rather than added, so the handler closes over the current data
+    // and scales instead of the ones it was first drawn with.
     g.select('.hover-overlay')
       .on('mousemove', (event) => {
         const [mx] = d3.pointer(event);
@@ -289,23 +296,28 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
         }
         if (d) onHover(d.date);
       });
+  }, [data, plottableColumns, isolatedSeries, columnColors, onHover, dimensions, x, y, innerWidth, innerHeight]);
 
-    const rule = g.select('.cursor-rule');
-    if (hoveredDate) {
-      const xPos = x(hoveredDate);
-      if (xPos >= 0 && xPos <= innerWidth) {
-        rule
-          .attr('x1', xPos).attr('x2', xPos)
-          .attr('y1', 0).attr('y2', innerHeight)
-          .style('opacity', 1);
-      } else {
-        rule.style('opacity', 0);
-      }
-    } else {
+  // The cursor rule, on its own so a mouse move touches one line's geometry
+  // rather than re-running the whole draw above.
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    const rule = d3.select(svg).select('.cursor-rule');
+    if (rule.empty()) return;
+
+    const xPos = hoveredDate == null ? null : x(hoveredDate);
+    if (xPos == null || xPos < 0 || xPos > innerWidth) {
       rule.style('opacity', 0);
+      return;
     }
 
-  }, [data, columns, plottableColumns, isolatedSeries, columnColors, hoveredDate, onHover, dimensions, chartOptions]);
+    rule
+      .attr('x1', xPos).attr('x2', xPos)
+      .attr('y1', 0).attr('y2', innerHeight)
+      .style('opacity', 1);
+  }, [hoveredDate, x, innerWidth, innerHeight]);
 
   return (
     <div style={{
