@@ -1,21 +1,51 @@
+/*
+ * The palette. These are the same names and values as THEME in src/theme.ts,
+ * which is where the TypeScript side reads them from; src/theme.test.ts fails
+ * if the two lists drift apart. Add a colour in both places or neither.
+ */
+:root {
+  --ground: #000000;
+  --ground-alt: #0d0d0d;
+  --panel: #111111;
+  --row-hover: #333333;
+
+  --rule: #333333;
+  --rule-strong: #555555;
+  --rule-hover: #888888;
+
+  --text: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.87);
+  --link: #4da6ff;
+
+  --grid-ink: #cfe0f0;
+
+  --plot-top: #1b2029;
+  --plot-mid: #0b0d11;
+  --plot-bottom: #000000;
+  --cursor: #ffffff;
+
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+}
+
 :root {
   font-family: Helvetica, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color-scheme: dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #000000;
+  color: var(--text-muted);
+  background-color: var(--ground);
 }
 
 html {
-  background-color: #000000;
+  background-color: var(--ground);
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  color: #ffffff;
+  color: var(--text);
 }
 
 /* Ensure app container is full width */
@@ -30,15 +60,15 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0d0d0d;
+  background: var(--ground-alt);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #555;
+  background: var(--rule-strong);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #888;
+  background: var(--rule-hover);
 }
 
 .chart-container {
@@ -61,7 +91,7 @@ body {
 .hover-details {
   position: relative;
   z-index: 1;
-  box-shadow: 0 3px 9px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 3px 9px rgb(0 0 0 / 90%);
 }
 
 /*
@@ -73,9 +103,9 @@ body {
   overflow-x: auto;
 }
 
-/* A hairline in the same ink as the plot's fine grid. */
+/* A hairline in the same ink as the plot's fine grid, hence the mix. */
 .data-table-container tbody tr {
-  border-top: 1px solid rgba(207, 224, 240, 0.08);
+  border-top: 1px solid color-mix(in srgb, var(--grid-ink) 8%, transparent);
 }
 
 table.data-table {
@@ -92,8 +122,8 @@ table.data-table td {
 }
 
 .upload-button {
-  background-color: #3b82f6;
-  color: white;
+  background-color: var(--accent);
+  color: var(--text);
   border: none;
   padding: 0.4rem 0.8rem;
   border-radius: 4px;
@@ -104,7 +134,7 @@ table.data-table td {
 }
 
 .upload-button:hover {
-  background-color: #2563eb;
+  background-color: var(--accent-hover);
 }
 
 .upload-button:active {
