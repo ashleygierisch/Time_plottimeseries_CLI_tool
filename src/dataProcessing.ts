@@ -369,20 +369,53 @@ export function analyzeColumnFormatters(
   return formatters;
 }
 
-export function spreadDuplicateDates(data: DataPoint[]): DataPoint[] {
-  const msPerDay = 24 * 60 * 60 * 1000;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+/**
+ * The typical distance between neighbouring dates, taken as the median so one
+ * gap in an otherwise regular series does not set the scale for the whole plot.
+ * A day when there are not two distinct dates to measure between.
+ */
+function typicalDateGap(timestamps: number[]): number {
+  const sorted = [...timestamps].sort((a, b) => a - b);
+  const gaps = sorted.slice(1).map((ts, i) => ts - sorted[i]!);
+  if (gaps.length === 0) return MS_PER_DAY;
+  gaps.sort((a, b) => a - b);
+  return gaps[Math.floor(gaps.length / 2)]!;
+}
+
+/**
+ * Nudges rows that share a date apart along the time axis, so that two rows on
+ * the same date read as two points a viewer can tell apart and hover
+ * separately, rather than one hidden behind the other.
+ *
+ * Rows are spaced one gap between neighbouring dates divided by the number of
+ * rows sharing the date, so a daily series puts two rows 12 hours apart and
+ * three rows 8 hours apart. Dividing the gap rather than a fixed span of time
+ * is what keeps the spread to scale: half a day separates monthly points by a
+ * fraction of a pixel and hourly points by more than their neighbours. Dividing
+ * by the size of the clump keeps the whole of it inside one gap however many
+ * rows it holds, since n - 1 steps of gap / n never add up to a gap.
+ *
+ * Each clump is centred on the date it belongs to, so spreading it does not
+ * drag the series later in time.
+ */
+export function spreadDuplicateDates(data: DataPoint[]): DataPoint[] {
   const groups = new Map<number, number[]>();
   data.forEach((d, i) => {
     const ts = d.date.getTime();
     groups.set(ts, [...(groups.get(ts) ?? []), i]);
   });
 
+  const gap = typicalDateGap([...groups.keys()]);
+
   return data.map((d, i) => {
     const group = groups.get(d.date.getTime())!;
     if (group.length <= 1) return d;
-    const pos = group.indexOf(i);
-    return { ...d, date: new Date(d.date.getTime() + Math.floor((pos * msPerDay) / group.length)) };
+    const step = gap / group.length;
+    // Measured from the middle of the clump, so the offsets cancel out across it.
+    const offset = (group.indexOf(i) - (group.length - 1) / 2) * step;
+    return { ...d, date: new Date(d.date.getTime() + Math.round(offset)) };
   });
 }
 

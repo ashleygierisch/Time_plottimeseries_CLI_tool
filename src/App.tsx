@@ -38,7 +38,10 @@ function App() {
   // Interaction State
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
   const [isolatedSeries, setIsolatedSeries] = useState<string | null>(null);
-  const [isSticky, setIsSticky] = useState(false);
+  // Both plot toggles start on: the chart is the point of the page, so it
+  // should stay in view while the table scrolls, and rows that share a date
+  // should be visible as separate points rather than one hiding the others.
+  const [isSticky, setIsSticky] = useState(true);
   const [spreadDates, setSpreadDates] = useState(true);
 
   // Every CSV arrives through here, however it was fetched, so that one CSV is

@@ -326,34 +326,98 @@ describe('spreadDuplicateDates', () => {
     assert.strictEqual(defined(result[1]).date.getTime(), d2.getTime());
   });
 
-  it('spreads two points on the same date 12 hours apart', () => {
-    const base = new Date('2023-01-01');
-    const data: DataPoint[] = [
-      { date: base, val: 1 },
-      { date: base, val: 2 },
-    ];
-    const result = spreadDuplicateDates(data);
-    assert.strictEqual(defined(result[0]).date.getTime(), base.getTime());
-    assert.strictEqual(defined(result[1]).date.getTime(), base.getTime() + msPerDay / 2);
+  // The spacing between rows sharing a date, for a clump of `count` of them in
+  // a series whose distinct dates sit `gapMs` apart.
+  const spacingOf = (count: number, gapMs: number): number => {
+    const base = new Date('2023-01-01').getTime();
+    const clump = Array.from({ length: count }, (_, val) => ({ date: new Date(base), val }));
+    const result = spreadDuplicateDates([
+      ...clump,
+      { date: new Date(base + gapMs), val: count },
+      { date: new Date(base + 2 * gapMs), val: count + 1 },
+    ]);
+    return defined(result[1]).date.getTime() - defined(result[0]).date.getTime();
+  };
+
+  it('divides one day between two rows on a daily series', () => {
+    assert.strictEqual(spacingOf(2, msPerDay), msPerDay / 2);
   });
 
-  it('spreads three points on the same date 8 hours apart', () => {
+  it('divides one day between three rows on a daily series', () => {
+    assert.strictEqual(spacingOf(3, msPerDay), msPerDay / 3);
+  });
+
+  it('spaces rows by the gap between dates divided by how many share the date', () => {
+    for (const count of [2, 3, 4, 7]) {
+      for (const gap of [msPerDay, 30 * msPerDay, 60 * 1000]) {
+        // A date holds whole milliseconds, so a gap that does not divide evenly
+        // lands a millisecond either side of the exact spacing.
+        const off = Math.abs(spacingOf(count, gap) - gap / count);
+        assert.ok(off <= 1, `${count} rows, ${gap}ms apart: off by ${off}ms`);
+      }
+    }
+  });
+
+  it('centres a spread pair on the date they share', () => {
     const base = new Date('2023-01-01');
-    const data: DataPoint[] = [
+    const next = new Date('2023-01-02');
+    const result = spreadDuplicateDates([
+      { date: base, val: 1 },
+      { date: base, val: 2 },
+      { date: next, val: 3 },
+    ]);
+    assert.strictEqual(defined(result[0]).date.getTime(), base.getTime() - msPerDay / 4);
+    assert.strictEqual(defined(result[1]).date.getTime(), base.getTime() + msPerDay / 4);
+  });
+
+  it('spreads three points evenly, the middle one on the date itself', () => {
+    const base = new Date('2023-01-01');
+    const next = new Date('2023-01-02');
+    const result = spreadDuplicateDates([
       { date: base, val: 1 },
       { date: base, val: 2 },
       { date: base, val: 3 },
-    ];
-    const result = spreadDuplicateDates(data);
-    assert.strictEqual(defined(result[0]).date.getTime(), base.getTime());
-    assert.strictEqual(
-      defined(result[1]).date.getTime(),
-      base.getTime() + Math.floor(msPerDay / 3),
-    );
-    assert.strictEqual(
-      defined(result[2]).date.getTime(),
-      base.getTime() + Math.floor((2 * msPerDay) / 3),
-    );
+      { date: next, val: 4 },
+    ]);
+    assert.strictEqual(defined(result[0]).date.getTime(), base.getTime() - msPerDay / 3);
+    assert.strictEqual(defined(result[1]).date.getTime(), base.getTime());
+    assert.strictEqual(defined(result[2]).date.getTime(), base.getTime() + msPerDay / 3);
+  });
+
+  it('falls back to a day when there is no second date to measure a gap from', () => {
+    const base = new Date('2023-01-01');
+    const result = spreadDuplicateDates([
+      { date: base, val: 1 },
+      { date: base, val: 2 },
+    ]);
+    assert.strictEqual(defined(result[0]).date.getTime(), base.getTime() - msPerDay / 4);
+    assert.strictEqual(defined(result[1]).date.getTime(), base.getTime() + msPerDay / 4);
+  });
+
+  it('keeps a spread clump clear of the dates on either side, however big it is', () => {
+    // Dividing the gap by the size of the clump is what buys this: a clump of n
+    // spans n - 1 steps of gap / n, which stays under one gap for every n.
+    for (const count of [2, 3, 5, 20]) {
+      const base = new Date('2023-01-01').getTime();
+      const gap = 10 * msPerDay;
+      const clump = Array.from({ length: count }, (_, val) => ({
+        date: new Date(base + gap),
+        val,
+      }));
+      const times = spreadDuplicateDates([
+        { date: new Date(base), val: -1 },
+        ...clump,
+        { date: new Date(base + 2 * gap), val: count },
+      ]).map(d => d.date.getTime());
+      assert.ok(
+        defined(times[1]) > defined(times[0]),
+        `${count} rows: starts after the date before`,
+      );
+      assert.ok(
+        defined(times[count]) < defined(times[count + 1]),
+        `${count} rows: ends before the date after`,
+      );
+    }
   });
 
   it('does not mutate the original data', () => {
@@ -377,8 +441,9 @@ describe('spreadDuplicateDates', () => {
     ];
     const result = spreadDuplicateDates(data);
     assert.strictEqual(defined(result[0]).date.getTime(), d1.getTime());
-    assert.strictEqual(defined(result[1]).date.getTime(), d2.getTime());
-    assert.strictEqual(defined(result[2]).date.getTime(), d2.getTime() + msPerDay / 2);
+    // A day between the two dates and two rows on the second, so 12 hours apart.
+    assert.strictEqual(defined(result[1]).date.getTime(), d2.getTime() - msPerDay / 4);
+    assert.strictEqual(defined(result[2]).date.getTime(), d2.getTime() + msPerDay / 4);
   });
 });
 

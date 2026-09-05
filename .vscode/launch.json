@@ -7,15 +7,6 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "tweak csv",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "program": "${workspaceFolder}/scripts/scale-csv.ts",
-    },
-    {
-      "type": "node",
-      "request": "launch",
       "name": "Static build",
       "skipFiles": [
         "<node_internals>/**"
