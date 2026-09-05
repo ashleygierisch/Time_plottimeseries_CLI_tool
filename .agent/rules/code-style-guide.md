@@ -45,8 +45,8 @@ Two constraints in this repo exist only as comments, and both are load-bearing:
 
 - `scripts/cli.ts` and everything it imports must stay inside the subset of
   TypeScript that scriptc compiles statically — no `throw`, no regular
-  expressions, no DOM types. `npx scriptc coverage dist/scriptc/main.ts` reports
-  what does not compile.
+  expressions, no DOM types. `npm run scriptc:coverage` reports what does not
+  compile, and `npm run validate` fails if anything does not.
 - The CSP hashes in `scripts/securityHeaders.ts` are taken over the exact bytes
   that end up inline in the report. Anything that changes those strings after
   hashing gives a blank page in production only.
@@ -86,8 +86,8 @@ Run this, without asking first:
 
     npm run validate
 
-That is the whole of CI in one command: `npm audit`, then lint, typecheck, test
-and a build of `pages-public/`, then smoke checks on the result — including
+That is the whole of CI in one command: `npm audit`, then lint, typecheck, the
+scriptc coverage check, test and a build of `pages-public/`, then smoke checks on the result — including
 that every inline `<script>` and `<style>` in the built page is covered by a
 CSP hash. Without `unshare` available it warns and runs with the network up.
 

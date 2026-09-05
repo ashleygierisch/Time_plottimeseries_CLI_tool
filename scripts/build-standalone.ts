@@ -7,9 +7,9 @@ import { inject } from 'postject';
 
 import { loadAssets } from './assets.ts';
 import type { Assets } from './report.ts';
+import { PROGRAM_NAME, scriptcEntry } from './scriptc.ts';
 
 const SENTINEL_FUSE = 'NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2';
-const PROGRAM_NAME = 'plottimeseries';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const distDir = path.join(rootDir, 'dist');
@@ -96,19 +96,8 @@ async function buildExecutable(): Promise<void> {
 function buildCompiled(assets: Assets): void {
   console.error(`Compiling ${path.relative(rootDir, compiledPath)} with scriptc...`);
 
-  const entry = `import { run } from '../../scripts/cli.ts';
-
-const template = ${JSON.stringify(assets.template)};
-const js = ${JSON.stringify(assets.js)};
-const css = ${JSON.stringify(assets.css)};
-
-const code = run(process.argv.slice(2), () => ({ template, js, css }), ${JSON.stringify(PROGRAM_NAME)});
-
-if (code !== 0) process.exit(code);
-`;
-
   fs.mkdirSync(scriptcDir, { recursive: true });
-  fs.writeFileSync(scriptcEntryPath, entry);
+  fs.writeFileSync(scriptcEntryPath, scriptcEntry(assets));
 
   execFileSync(
     process.execPath,

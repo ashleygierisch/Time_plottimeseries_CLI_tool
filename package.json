@@ -8,6 +8,7 @@
     "build": "node scripts/plot-csv.ts",
     "build:standalone": "node scripts/build-standalone.ts",
     "validate": "node scripts/validate.ts",
+    "scriptc:coverage": "node scripts/scriptc-coverage.ts",
     "lint": "eslint src scripts eslint.config.js --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

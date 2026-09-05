@@ -24,7 +24,7 @@ const SITE_DIR = path.join(ROOT, 'pages-public');
 const SAMPLE_CSV = path.join('public', 'data.csv');
 const SCREENSHOT = path.join('public', 'plottimeseries-screen-shot.png');
 
-const OFFLINE_STEPS = ['format:check', 'lint', 'typecheck', 'test'];
+const OFFLINE_STEPS = ['format:check', 'lint', 'typecheck', 'scriptc:coverage', 'test'];
 
 // Tried in order; the first one that can run a command is used.
 const SANDBOXES = [

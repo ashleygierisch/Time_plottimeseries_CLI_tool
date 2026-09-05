@@ -62,8 +62,10 @@ with the other two.
 
 The CLI has to stay inside the subset of TypeScript that scriptc compiles
 statically, which is why `scripts/cli.ts` and everything it imports avoid
-`throw`, regular expressions and DOM types. `npx scriptc coverage dist/scriptc/main.ts`
-reports what does not compile, if that ever needs checking.
+`throw`, regular expressions and DOM types. `npm run scriptc:coverage` reports
+what does not compile, and `npm run validate` runs it, so drifting out of the
+subset fails there rather than quietly dropping the compiled executable
+from a release.
 
 The CSV can also be piped in on stdin, and the y scale can be pinned with
 `--y-max` / `--y-min` (note the `--` that stops npm from eating the flags):
