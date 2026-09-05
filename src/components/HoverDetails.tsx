@@ -230,7 +230,7 @@ export const HoverDetails: React.FC<HoverDetailsProps> = ({
                     opacity: isSeries && isolatedSeries && isolatedSeries !== col ? 0.5 : 1
                   }}
                 >
-                  {renderCellValue(cellValue as string | LinkData | undefined)}
+                  {renderCellValue(cellValue)}
                 </td>
               );
             })}

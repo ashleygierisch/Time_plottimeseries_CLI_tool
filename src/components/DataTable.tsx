@@ -71,7 +71,7 @@ export const DataTable: React.FC<DataTableProps> = ({ formattedData, columns, ho
                          textAlign: isDate ? 'left' : undefined
                        }}
                      >
-                      {renderCellValue(cellValue as string | LinkData)}
+                      {renderCellValue(cellValue)}
                     </td>
                    );
                  })}

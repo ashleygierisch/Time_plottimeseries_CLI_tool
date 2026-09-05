@@ -60,7 +60,7 @@ function App() {
         setLoading(false);
       }
     };
-    loadData();
+    void loadData();
   }, []);
 
   // Apply date spreading
@@ -142,7 +142,7 @@ function App() {
           spreadDates={spreadDates}
           onToggleSpreadDates={() => setSpreadDates(!spreadDates)}
           columnColors={columnColors}
-          onFileUpload={handleFileUpload}
+          onFileUpload={event => void handleFileUpload(event)}
           columnStyles={columnStyles}
           chartOptions={chartOptions}
         />
