@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { subdivideGridPositions } from './gridLines.ts';
 
@@ -6,22 +6,22 @@ function sortedRounded(positions: number[]): number[] {
   return positions.map(p => Math.round(p * 1e6) / 1e6).sort((a, b) => a - b);
 }
 
-test('subdivideGridPositions', async (t) => {
-  await t.test('splits each gap into equal steps', () => {
+describe('subdivideGridPositions', () => {
+  it('splits each gap into equal steps', () => {
     assert.deepStrictEqual(
       sortedRounded(subdivideGridPositions([0, 100], 4, [0, 100])),
       [25, 50, 75]
     );
   });
 
-  await t.test('never lands on a major position', () => {
+  it('never lands on a major position', () => {
     const majors = [0, 50, 100, 150];
     const minors = subdivideGridPositions(majors, 5, [0, 150]);
     majors.forEach(major => assert.ok(!minors.includes(major), `${major} is a major`));
     assert.strictEqual(minors.length, 12); // 3 gaps x 4 in-between lines, no room outside
   });
 
-  await t.test('carries the outer step widths to the edges of the extent', () => {
+  it('carries the outer step widths to the edges of the extent', () => {
     // Majors at 40 and 60 in a 0..100 area: the 5px step keeps going both ways.
     const minors = sortedRounded(subdivideGridPositions([40, 60], 4, [0, 100]));
     assert.deepStrictEqual(minors, [
@@ -29,7 +29,7 @@ test('subdivideGridPositions', async (t) => {
     ]);
   });
 
-  await t.test('subdivides unevenly spaced majors gap by gap', () => {
+  it('subdivides unevenly spaced majors gap by gap', () => {
     // Time ticks are rarely evenly spaced, so each gap gets its own step.
     assert.deepStrictEqual(
       sortedRounded(subdivideGridPositions([0, 10, 40], 2, [0, 40])),
@@ -37,24 +37,24 @@ test('subdivideGridPositions', async (t) => {
     );
   });
 
-  await t.test('accepts an inverted extent, as a y scale range is', () => {
+  it('accepts an inverted extent, as a y scale range is', () => {
     assert.deepStrictEqual(
       sortedRounded(subdivideGridPositions([0, 100], 2, [100, 0])),
       [50]
     );
   });
 
-  await t.test('stays inside the extent', () => {
+  it('stays inside the extent', () => {
     const minors = subdivideGridPositions([0, 20], 4, [0, 20]);
     minors.forEach(p => assert.ok(p >= 0 && p <= 20, `${p} is outside 0..20`));
   });
 
-  await t.test('has nothing to line up with under two majors', () => {
+  it('has nothing to line up with under two majors', () => {
     assert.deepStrictEqual(subdivideGridPositions([], 5, [0, 100]), []);
     assert.deepStrictEqual(subdivideGridPositions([50], 5, [0, 100]), []);
   });
 
-  await t.test('returns nothing when there is nothing to divide', () => {
+  it('returns nothing when there is nothing to divide', () => {
     assert.deepStrictEqual(subdivideGridPositions([0, 100], 1, [0, 100]), []);
     assert.deepStrictEqual(subdivideGridPositions([0, 0], 5, [0, 100]), []);
   });

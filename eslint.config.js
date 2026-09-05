@@ -66,6 +66,19 @@ export default tseslint.config(
     extends: [tseslint.configs.disableTypeChecked],
   },
   {
+    // `node:test` groups two ways: `describe`/`it`, and a `test` whose context
+    // takes nested `t.test` calls. Both work; having both means two spellings
+    // of the same structure, so this repo groups with describe/it and leaves
+    // bare `test` for a file of independent checks.
+    files: ['**/*.test.{ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': ['error', {
+        selector: "CallExpression[callee.object.name='t'][callee.property.name='test']",
+        message: 'Group with describe/it rather than nesting t.test inside a test.',
+      }],
+    },
+  },
+  {
     // React lives entirely under src/; scripts/ is plain Node.
     files: ['src/**/*.{ts,tsx}'],
     extends: [
