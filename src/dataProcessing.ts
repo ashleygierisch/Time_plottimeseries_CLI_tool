@@ -48,9 +48,23 @@ export function formatDate(date: Date): string {
   return date.toISOString().split('T')[0];
 }
 
+/** Narrows a formatted cell value to the markdown-style link it may hold. */
+export function isLinkData(val: unknown): val is LinkData {
+  return typeof val === 'object' && val !== null && 'linkText' in val && 'url' in val;
+}
+
+/**
+ * True for the column the x axis is drawn from. Which column that is, is a
+ * property of its name and nothing else, so every reader has to agree on the
+ * same rule -- including that the name is matched case-insensitively.
+ */
+export function isDateColumn(name: string): boolean {
+  return name.toLowerCase() === 'date';
+}
+
 /** True when a column is a candidate for plotting, i.e. not the date and not opted out. */
 export function isSeriesColumn(name: string, columnStyles: ColumnStyles = {}): boolean {
-  return name.toLowerCase() !== 'date' && columnStyles[name]?.plot !== false;
+  return !isDateColumn(name) && columnStyles[name]?.plot !== false;
 }
 
 export function formatColumnName(name: string, style?: ColumnStyle): string {
@@ -222,7 +236,7 @@ export function parseCSV(csvString: string): { data: DataPoint[], columns: strin
   if (rows.length < 2) return { data: [], columns: [], columnStyles };
 
   const [columns, ...records] = rows;
-  const dateIndex = columns.findIndex(c => c.toLowerCase() === 'date');
+  const dateIndex = columns.findIndex(isDateColumn);
 
   if (dateIndex === -1) return { data: [], columns, columnStyles };
 
@@ -233,7 +247,7 @@ export function parseCSV(csvString: string): { data: DataPoint[], columns: strin
 
     const point: DataPoint = { date };
     columns.forEach((col, i) => {
-      if (col.toLowerCase() === 'date') {
+      if (isDateColumn(col)) {
         point[col] = date;
       } else {
         const rawValue = record[i] || '';
@@ -277,7 +291,7 @@ export function analyzeColumnFormatters(
   const formatters: Record<string, NumberFormatter> = {};
 
   columns.forEach(col => {
-    if (col.toLowerCase() === 'date') return;
+    if (isDateColumn(col)) return;
 
     const styled = styledFormatter(columnStyles[col]);
     if (styled) {
@@ -353,7 +367,7 @@ export function processCSV(csvString: string): {
     };
     columns.forEach(col => {
       let formattedVal: string | LinkData;
-      if (col.toLowerCase() === 'date') {
+      if (isDateColumn(col)) {
         formattedVal = formatDate(row.date);
       } else {
         const val = row[col];

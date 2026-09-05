@@ -1,0 +1,18 @@
+{
+  // Nothing typechecks against this file. `npm run typecheck` names
+  // src/tsconfig.json and scripts/tsconfig.json explicitly, and an editor
+  // picks whichever of those two sits closest to the file it has open. This
+  // one is for the tools that look for a tsconfig.json next to package.json
+  // instead -- the test runner among them, which transpiles JSX and would
+  // otherwise fall back to the classic runtime and demand `React` in scope in
+  // files the bundle does not.
+  //
+  // It extends the same base so a test transpiles under the settings the
+  // bundle is built with. It deliberately does not set `lib`: that changes
+  // what typechecks, not what transpiles, and the two projects disagree.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx"
+  },
+  "include": ["src", "scripts"]
+}

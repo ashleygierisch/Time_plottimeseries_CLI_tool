@@ -1,6 +1,7 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { type ColumnStyles, type FormattedDataPoint, formatColumnName, isSeriesColumn, type LinkData } from '../dataProcessing';
+import { type ColumnStyles, type FormattedDataPoint, formatColumnName, isDateColumn, isSeriesColumn } from '../dataProcessing';
 import { apportionColumnWidths } from '../columnWidths';
+import { cellText, EMPTY_VALUE, renderCellValue } from './CellValue';
 
 interface HoverDetailsProps {
   formattedData: FormattedDataPoint[];
@@ -20,32 +21,6 @@ interface HoverDetailsProps {
 // useLayoutEffect warns when rendered on the server (the CLI report is rendered
 // with renderToStaticMarkup), so fall back to useEffect there.
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
-
-const EMPTY_VALUE = '-';
-
-const cellText = (val: string | Date | LinkData | undefined): string => {
-  if (val && typeof val === 'object' && 'linkText' in val && 'url' in val) return val.linkText;
-  if (val instanceof Date) return val.toISOString();
-  return String(val ?? EMPTY_VALUE);
-};
-
-const renderCellValue = (val: string | Date | LinkData | undefined) => {
-  if (val && typeof val === 'object' && 'linkText' in val && 'url' in val) {
-    return (
-      <a
-        href={val.url.toString()}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ color: '#4da6ff', textDecoration: 'none' }}
-        onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
-        onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
-      >
-        {val.linkText}
-      </a>
-    );
-  }
-  return String(val ?? EMPTY_VALUE);
-};
 
 interface Measurement {
   /** Identifies the content the widths were measured for. */
@@ -83,7 +58,7 @@ export const HoverDetails: React.FC<HoverDetailsProps> = ({
     for (const col of columns) widest[col] = EMPTY_VALUE;
     for (const row of formattedData) {
       for (const col of columns) {
-        const text = cellText(col.toLowerCase() === 'date' ? row.formattedDate : row[col]);
+        const text = cellText(isDateColumn(col) ? row.formattedDate : row[col]);
         if (text.length > widest[col].length) widest[col] = text;
       }
     }
@@ -158,7 +133,7 @@ export const HoverDetails: React.FC<HoverDetailsProps> = ({
         <thead>
           <tr ref={headerRowRef}>
             {columns.map((col, i) => {
-              const isDate = col.toLowerCase() === 'date';
+              const isDate = isDateColumn(col);
               const isSeries = isSeriesColumn(col, columnStyles);
               return (
                 <th
@@ -217,7 +192,7 @@ export const HoverDetails: React.FC<HoverDetailsProps> = ({
           {/* Row of Values */}
           <tr>
             {columns.map(col => {
-              const isDate = col.toLowerCase() === 'date';
+              const isDate = isDateColumn(col);
               const isSeries = isSeriesColumn(col, columnStyles);
               const cellValue = isDate ? currentData?.formattedDate : currentData?.[col];
               return (
