@@ -10,7 +10,7 @@ describe('subdivideGridPositions', () => {
   it('splits each gap into equal steps', () => {
     assert.deepStrictEqual(
       sortedRounded(subdivideGridPositions([0, 100], 4, [0, 100])),
-      [25, 50, 75]
+      [25, 50, 75],
     );
   });
 
@@ -24,24 +24,19 @@ describe('subdivideGridPositions', () => {
   it('carries the outer step widths to the edges of the extent', () => {
     // Majors at 40 and 60 in a 0..100 area: the 5px step keeps going both ways.
     const minors = sortedRounded(subdivideGridPositions([40, 60], 4, [0, 100]));
-    assert.deepStrictEqual(minors, [
-      0, 5, 10, 15, 20, 25, 30, 35, 45, 50, 55, 65, 70, 75, 80, 85, 90, 95, 100,
-    ]);
+    assert.deepStrictEqual(
+      minors,
+      [0, 5, 10, 15, 20, 25, 30, 35, 45, 50, 55, 65, 70, 75, 80, 85, 90, 95, 100],
+    );
   });
 
   it('subdivides unevenly spaced majors gap by gap', () => {
     // Time ticks are rarely evenly spaced, so each gap gets its own step.
-    assert.deepStrictEqual(
-      sortedRounded(subdivideGridPositions([0, 10, 40], 2, [0, 40])),
-      [5, 25]
-    );
+    assert.deepStrictEqual(sortedRounded(subdivideGridPositions([0, 10, 40], 2, [0, 40])), [5, 25]);
   });
 
   it('accepts an inverted extent, as a y scale range is', () => {
-    assert.deepStrictEqual(
-      sortedRounded(subdivideGridPositions([0, 100], 2, [100, 0])),
-      [50]
-    );
+    assert.deepStrictEqual(sortedRounded(subdivideGridPositions([0, 100], 2, [100, 0])), [50]);
   });
 
   it('stays inside the extent', () => {

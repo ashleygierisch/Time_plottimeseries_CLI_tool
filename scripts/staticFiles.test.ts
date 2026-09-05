@@ -80,7 +80,7 @@ describe('resolveStaticFile', () => {
       assert.deepStrictEqual(
         resolveStaticFile(attempt, [ROOT, PUBLIC], disk('/etc/passwd')),
         { kind: 'forbidden' },
-        attempt
+        attempt,
       );
     }
   });
@@ -88,11 +88,15 @@ describe('resolveStaticFile', () => {
   it('refuses a percent-encoded climb, which survives URL parsing intact', () => {
     // `new URL()` normalises `../` but leaves `%2e%2e` alone, so this is the
     // form that actually reaches the server.
-    for (const attempt of ['/%2e%2e/etc/passwd', '/%2E%2E%2Fetc%2Fpasswd', '/..%2f..%2fetc/passwd']) {
+    for (const attempt of [
+      '/%2e%2e/etc/passwd',
+      '/%2E%2E%2Fetc%2Fpasswd',
+      '/..%2f..%2fetc/passwd',
+    ]) {
       assert.deepStrictEqual(
         resolveStaticFile(attempt, [ROOT, PUBLIC], disk('/etc/passwd')),
         { kind: 'forbidden' },
-        attempt
+        attempt,
       );
     }
   });

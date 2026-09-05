@@ -24,7 +24,7 @@ const SITE_DIR = path.join(ROOT, 'pages-public');
 const SAMPLE_CSV = path.join('public', 'data.csv');
 const SCREENSHOT = path.join('public', 'plottimeseries-screen-shot.png');
 
-const OFFLINE_STEPS = ['lint', 'typecheck', 'test'];
+const OFFLINE_STEPS = ['format:check', 'lint', 'typecheck', 'test'];
 
 // Tried in order; the first one that can run a command is used.
 const SANDBOXES = [
@@ -84,7 +84,7 @@ function buildSite(): void {
     const { status, error } = spawnSync(
       'npm',
       ['run', 'build', '--', SAMPLE_CSV, '--headers-file', path.join(SITE_DIR, '_headers')],
-      { stdio: ['ignore', out, 'inherit'], cwd: ROOT }
+      { stdio: ['ignore', out, 'inherit'], cwd: ROOT },
     );
     if (error) {
       console.error(error);
@@ -98,7 +98,10 @@ function buildSite(): void {
     fs.closeSync(out);
   }
 
-  fs.copyFileSync(path.join(ROOT, SCREENSHOT), path.join(SITE_DIR, 'img', path.basename(SCREENSHOT)));
+  fs.copyFileSync(
+    path.join(ROOT, SCREENSHOT),
+    path.join(SITE_DIR, 'img', path.basename(SCREENSHOT)),
+  );
 }
 
 function fail(message: string): never {
@@ -137,8 +140,8 @@ function checkBuildArtifacts(): void {
   for (const source of inline) {
     if (!csp.includes(cspHash(source))) {
       fail(
-        'An inline <script>/<style> in the built page is not covered by a CSP hash, '
-        + 'so the browser will block it. Check scripts/plot-csv.ts.'
+        'An inline <script>/<style> in the built page is not covered by a CSP hash, ' +
+          'so the browser will block it. Check scripts/plot-csv.ts.',
       );
     }
   }

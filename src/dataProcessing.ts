@@ -192,7 +192,7 @@ export function parseColumnStyle(spec: string): ColumnStyle {
 }
 
 /** Splits a header field into its column name and its optional `{...}` style spec. */
-export function parseColumnHeader(header: string): { name: string, style: ColumnStyle } {
+export function parseColumnHeader(header: string): { name: string; style: ColumnStyle } {
   const match = header.match(/^([^{]*)\{(.*)\}\s*$/s);
   if (!match) return { name: header, style: {} };
   const [, name = '', spec = ''] = match;
@@ -207,7 +207,10 @@ function escapeCSVField(field: string): string {
  * Pulls style specs off the header line, returning the CSV with plain column
  * names so it can be handed to a standard CSV parser.
  */
-export function extractColumnStyles(csvString: string): { csv: string, columnStyles: ColumnStyles } {
+export function extractColumnStyles(csvString: string): {
+  csv: string;
+  columnStyles: ColumnStyles;
+} {
   const newline = csvString.indexOf('\n');
   const header = newline === -1 ? csvString : csvString.slice(0, newline);
 
@@ -226,7 +229,11 @@ export function extractColumnStyles(csvString: string): { csv: string, columnSty
   return { csv: names.join(',') + (carriageReturn ? '\r' : '') + rest, columnStyles };
 }
 
-export function parseCSV(csvString: string): { data: DataPoint[], columns: string[], columnStyles: ColumnStyles } {
+export function parseCSV(csvString: string): {
+  data: DataPoint[];
+  columns: string[];
+  columnStyles: ColumnStyles;
+} {
   const { csv, columnStyles } = extractColumnStyles(csvString);
 
   // csvParseRows, not csvParse. csvParse compiles a row-to-object function with
@@ -246,24 +253,26 @@ export function parseCSV(csvString: string): { data: DataPoint[], columns: strin
 
   if (dateIndex === -1) return { data: [], columns, columnStyles };
 
-  const data = records.map((record) => {
-    const rawDate = record[dateIndex];
-    if (!rawDate) return null;
-    const date = new Date(rawDate);
-    if (isNaN(date.getTime())) return null;
+  const data = records
+    .map(record => {
+      const rawDate = record[dateIndex];
+      if (!rawDate) return null;
+      const date = new Date(rawDate);
+      if (isNaN(date.getTime())) return null;
 
-    const point: DataPoint = { date };
-    columns.forEach((col, i) => {
-      if (isDateColumn(col)) {
-        point[col] = date;
-      } else {
-        const rawValue = record[i] || '';
-        const numValue = +rawValue;
-        point[col] = isNaN(numValue) ? rawValue : numValue;
-      }
-    });
-    return point;
-  }).filter((d): d is DataPoint => d !== null);
+      const point: DataPoint = { date };
+      columns.forEach((col, i) => {
+        if (isDateColumn(col)) {
+          point[col] = date;
+        } else {
+          const rawValue = record[i] || '';
+          const numValue = +rawValue;
+          point[col] = isNaN(numValue) ? rawValue : numValue;
+        }
+      });
+      return point;
+    })
+    .filter((d): d is DataPoint => d !== null);
 
   return { data, columns, columnStyles };
 }
@@ -275,17 +284,33 @@ function styledFormatter(style: ColumnStyle | undefined): NumberFormatter | null
   switch (style.type) {
     case 'percent': {
       const places = style.places ?? 1;
-      return (val: number) => val.toLocaleString(undefined, { style: 'percent', minimumFractionDigits: places, maximumFractionDigits: places });
+      return (val: number) =>
+        val.toLocaleString(undefined, {
+          style: 'percent',
+          minimumFractionDigits: places,
+          maximumFractionDigits: places,
+        });
     }
     case 'currency': {
       const places = style.places ?? 2;
-      return (val: number) => val.toLocaleString(undefined, { style: 'currency', currency: style.currency ?? 'USD', minimumFractionDigits: places, maximumFractionDigits: places });
+      return (val: number) =>
+        val.toLocaleString(undefined, {
+          style: 'currency',
+          currency: style.currency ?? 'USD',
+          minimumFractionDigits: places,
+          maximumFractionDigits: places,
+        });
     }
     case 'integer':
-      return (val: number) => val.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      return (val: number) =>
+        val.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     default: {
       const places = style.places ?? 2;
-      return (val: number) => val.toLocaleString(undefined, { minimumFractionDigits: places, maximumFractionDigits: places });
+      return (val: number) =>
+        val.toLocaleString(undefined, {
+          minimumFractionDigits: places,
+          maximumFractionDigits: places,
+        });
     }
   }
 }
@@ -293,7 +318,7 @@ function styledFormatter(style: ColumnStyle | undefined): NumberFormatter | null
 export function analyzeColumnFormatters(
   data: DataPoint[],
   columns: string[],
-  columnStyles: ColumnStyles = {}
+  columnStyles: ColumnStyles = {},
 ): Record<string, NumberFormatter> {
   const formatters: Record<string, NumberFormatter> = {};
 
@@ -320,16 +345,24 @@ export function analyzeColumnFormatters(
     });
 
     if (!hasNumbers) {
-      formatters[col] = (val: number) => val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      formatters[col] = (val: number) =>
+        val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       return;
     }
 
     if (min >= -2 && max <= 2) {
-      formatters[col] = (val: number) => val.toLocaleString(undefined, { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 });
+      formatters[col] = (val: number) =>
+        val.toLocaleString(undefined, {
+          style: 'percent',
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 1,
+        });
     } else if (min >= -10 && max <= 10) {
-      formatters[col] = (val: number) => val.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+      formatters[col] = (val: number) =>
+        val.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
     } else {
-      formatters[col] = (val: number) => val.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      formatters[col] = (val: number) =>
+        val.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     }
   });
 
@@ -349,7 +382,7 @@ export function spreadDuplicateDates(data: DataPoint[]): DataPoint[] {
     const group = groups.get(d.date.getTime())!;
     if (group.length <= 1) return d;
     const pos = group.indexOf(i);
-    return { ...d, date: new Date(d.date.getTime() + Math.floor(pos * msPerDay / group.length)) };
+    return { ...d, date: new Date(d.date.getTime() + Math.floor((pos * msPerDay) / group.length)) };
   });
 }
 

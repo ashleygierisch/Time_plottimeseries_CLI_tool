@@ -66,7 +66,7 @@ async function buildExecutable(): Promise<void> {
 
   fs.writeFileSync(
     seaConfigPath,
-    JSON.stringify({ main: scriptPath, output: blobPath, disableExperimentalSEAWarning: true })
+    JSON.stringify({ main: scriptPath, output: blobPath, disableExperimentalSEAWarning: true }),
   );
 
   execFileSync(process.execPath, ['--experimental-sea-config', seaConfigPath], {
@@ -120,7 +120,7 @@ if (code !== 0) process.exit(code);
       compiledPath,
       '--no-keep-c',
     ],
-    { stdio: ['ignore', 'ignore', 'inherit'] }
+    { stdio: ['ignore', 'ignore', 'inherit'] },
   );
 }
 

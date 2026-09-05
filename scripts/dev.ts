@@ -24,15 +24,17 @@ async function start(): Promise<void> {
     loader: { '.tsx': 'tsx', '.ts': 'ts' },
     platform: 'browser',
     sourcemap: true,
-    plugins: [{
-      name: 'reload-plugin',
-      setup(build) {
-        build.onEnd(() => {
-          console.log('Build ended, reloading...');
-          clients.forEach(res => res.write('data: update\n\n'));
-        });
+    plugins: [
+      {
+        name: 'reload-plugin',
+        setup(build) {
+          build.onEnd(() => {
+            console.log('Build ended, reloading...');
+            clients.forEach(res => res.write('data: update\n\n'));
+          });
+        },
       },
-    }],
+    ],
   });
 
   await ctx.watch();
@@ -75,7 +77,10 @@ async function start(): Promise<void> {
       }
       res.writeHead(200, { 'Content-Type': contentType(filePath) });
       if (path.extname(filePath) === '.html') {
-        res.end(content.toString('utf-8') + '<script>new EventSource("/esbuild").onmessage = () => location.reload()</script>');
+        res.end(
+          content.toString('utf-8') +
+            '<script>new EventSource("/esbuild").onmessage = () => location.reload()</script>',
+        );
       } else {
         res.end(content);
       }

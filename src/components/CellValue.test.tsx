@@ -33,7 +33,7 @@ describe('renderCellValue', () => {
       const text = renderToStaticMarkup(<>{cellText(val)}</>);
       assert.ok(
         render(val).includes(text),
-        `rendered cell does not contain its measured text: ${cellText(val)}`
+        `rendered cell does not contain its measured text: ${cellText(val)}`,
       );
     }
   });

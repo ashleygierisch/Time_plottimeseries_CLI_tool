@@ -8,7 +8,7 @@ import { cssVar, THEME, type ThemeColor } from './theme.ts';
 
 const styleSheet = fs.readFileSync(
   path.join(path.dirname(fileURLToPath(import.meta.url)), 'style.css'),
-  'utf-8'
+  'utf-8',
 );
 
 /** The first `:root { ... }` block, which is the palette. */
@@ -37,7 +37,7 @@ describe('the palette in style.css and THEME', () => {
       assert.strictEqual(
         declared.get(property),
         THEME[name],
-        `${property} in style.css does not match THEME.${name}`
+        `${property} in style.css does not match THEME.${name}`,
       );
     }
   });

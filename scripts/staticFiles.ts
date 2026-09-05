@@ -15,9 +15,7 @@ export function isInside(directory: string, filePath: string): boolean {
 }
 
 export type Resolution =
-  | { kind: 'file', filePath: string }
-  | { kind: 'forbidden' }
-  | { kind: 'not-found' };
+  { kind: 'file'; filePath: string } | { kind: 'forbidden' } | { kind: 'not-found' };
 
 const MIME_TYPES: Record<string, string> = {
   '.html': 'text/html',
@@ -45,7 +43,7 @@ export function contentType(filePath: string): string {
 export function resolveStaticFile(
   pathname: string,
   roots: readonly string[],
-  exists: (filePath: string) => boolean
+  exists: (filePath: string) => boolean,
 ): Resolution {
   let decoded: string;
   try {

@@ -11,6 +11,6 @@ declare module 'postject' {
     filename: string,
     resourceName: string,
     resourceData: Buffer,
-    options?: InjectOptions
+    options?: InjectOptions,
   ): Promise<void>;
 }

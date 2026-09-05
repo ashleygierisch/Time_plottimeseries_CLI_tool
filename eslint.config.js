@@ -33,30 +33,37 @@ export default tseslint.config(
       // `node:test`'s test/describe/it return a promise the runner owns; the
       // caller is not meant to await it. Everything else still has to be
       // handled, which is the point of the rule.
-      '@typescript-eslint/no-floating-promises': ['error', {
-        allowForKnownSafeCalls: [
-          { from: 'package', package: 'node:test', name: ['describe', 'it', 'test'] },
-        ],
-      }],
-      'no-restricted-imports': ['error', {
-        patterns: [
-          {
-            // `node:fs` and `fs` resolve to the same module, but only the
-            // prefixed form says at a glance that it is not a package
-            // somebody could publish under that name.
-            regex: '^(assert|buffer|child_process|crypto|events|fs|http|https|net|os|path|process|stream|test|url|util|zlib)(/|$)',
-            message: 'Import Node built-ins with the `node:` prefix.',
-          },
-          {
-            // Both bundlers here resolve an extensionless relative import,
-            // and `node scripts/whatever.ts` does not. Writing the extension
-            // always is the form that works everywhere, so nothing depends on
-            // which tool happens to load a file.
-            regex: '^\\.\\.?(/.*)?/[^/.]+$',
-            message: 'Give relative imports their file extension: `./foo.ts`, not `./foo`.',
-          },
-        ],
-      }],
+      '@typescript-eslint/no-floating-promises': [
+        'error',
+        {
+          allowForKnownSafeCalls: [
+            { from: 'package', package: 'node:test', name: ['describe', 'it', 'test'] },
+          ],
+        },
+      ],
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              // `node:fs` and `fs` resolve to the same module, but only the
+              // prefixed form says at a glance that it is not a package
+              // somebody could publish under that name.
+              regex:
+                '^(assert|buffer|child_process|crypto|events|fs|http|https|net|os|path|process|stream|test|url|util|zlib)(/|$)',
+              message: 'Import Node built-ins with the `node:` prefix.',
+            },
+            {
+              // Both bundlers here resolve an extensionless relative import,
+              // and `node scripts/whatever.ts` does not. Writing the extension
+              // always is the form that works everywhere, so nothing depends on
+              // which tool happens to load a file.
+              regex: '^\\.\\.?(/.*)?/[^/.]+$',
+              message: 'Give relative imports their file extension: `./foo.ts`, not `./foo`.',
+            },
+          ],
+        },
+      ],
     },
   },
   {
@@ -72,10 +79,13 @@ export default tseslint.config(
     // bare `test` for a file of independent checks.
     files: ['**/*.test.{ts,tsx}'],
     rules: {
-      'no-restricted-syntax': ['error', {
-        selector: "CallExpression[callee.object.name='t'][callee.property.name='test']",
-        message: 'Group with describe/it rather than nesting t.test inside a test.',
-      }],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "CallExpression[callee.object.name='t'][callee.property.name='test']",
+          message: 'Group with describe/it rather than nesting t.test inside a test.',
+        },
+      ],
     },
   },
   {
@@ -85,5 +95,5 @@ export default tseslint.config(
       eslintReact.configs['recommended-typescript'],
       reactHooks.configs.flat['recommended-latest'],
     ],
-  }
+  },
 );

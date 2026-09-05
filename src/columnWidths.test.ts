@@ -8,7 +8,9 @@ const sum = (values: number[]) => values.reduce((total, value) => total + value,
 describe('apportionColumnWidths', () => {
   it('never totals more than the measured width', () => {
     // Ceiling these 14 columns would add 7px and overflow the container.
-    const measured = [80.5, 60.5, 60.5, 60.5, 60.5, 60.5, 60.5, 90.4, 90.4, 90.4, 90.4, 90.4, 90.4, 90.4];
+    const measured = [
+      80.5, 60.5, 60.5, 60.5, 60.5, 60.5, 60.5, 90.4, 90.4, 90.4, 90.4, 90.4, 90.4, 90.4,
+    ];
     const widths = apportionColumnWidths(measured);
     assert.strictEqual(sum(widths), Math.floor(sum(measured)));
   });

@@ -1,5 +1,11 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { type ColumnStyles, type FormattedDataPoint, formatColumnName, isDateColumn, isSeriesColumn } from '../dataProcessing.ts';
+import {
+  type ColumnStyles,
+  type FormattedDataPoint,
+  formatColumnName,
+  isDateColumn,
+  isSeriesColumn,
+} from '../dataProcessing.ts';
 import { apportionColumnWidths } from '../columnWidths.ts';
 import { cellText, EMPTY_VALUE, renderCellValue } from './CellValue.tsx';
 import { cssVar } from '../theme.ts';
@@ -90,7 +96,7 @@ export const HoverDetails: React.FC<HoverDetailsProps> = ({
     const headerRow = headerRowRef.current;
     if (!container || !headerRow) return;
     const widths = apportionColumnWidths(
-      Array.from(headerRow.cells, cell => cell.getBoundingClientRect().width)
+      Array.from(headerRow.cells, cell => cell.getBoundingClientRect().width),
     );
     if (widths.length !== columns.length) return;
     // Rendered geometry cannot be known before a render, so measuring and
@@ -117,14 +123,21 @@ export const HoverDetails: React.FC<HoverDetailsProps> = ({
   }, []);
 
   return (
-    <div ref={containerRef} className="hover-details" style={{
-      padding: '1rem',
-      background: cssVar('panel'),
-      borderBottom: `1px solid ${cssVar('rule')}`,
-      overflowX: 'auto',
-      color: cssVar('text')
-    }}>
-      <table className="data-table" style={{ fontSize: '0.9rem', tableLayout: columnWidths ? 'fixed' : 'auto' }}>
+    <div
+      ref={containerRef}
+      className="hover-details"
+      style={{
+        padding: '1rem',
+        background: cssVar('panel'),
+        borderBottom: `1px solid ${cssVar('rule')}`,
+        overflowX: 'auto',
+        color: cssVar('text'),
+      }}
+    >
+      <table
+        className="data-table"
+        style={{ fontSize: '0.9rem', tableLayout: columnWidths ? 'fixed' : 'auto' }}
+      >
         {columnWidths && (
           <colgroup>
             {columns.map((col, i) => (
@@ -146,7 +159,7 @@ export const HoverDetails: React.FC<HoverDetailsProps> = ({
                     cursor: isSeries ? 'pointer' : undefined,
                     opacity: isSeries && isolatedSeries && isolatedSeries !== col ? 0.5 : 1,
                     textDecoration: isSeries && isolatedSeries === col ? 'underline' : 'none',
-                    borderBottom: `1px solid ${cssVar('ruleStrong')}`
+                    borderBottom: `1px solid ${cssVar('ruleStrong')}`,
                   }}
                   onClick={() => isSeries && onSelectSeries(col)}
                 >
@@ -162,7 +175,14 @@ export const HoverDetails: React.FC<HoverDetailsProps> = ({
             <tr aria-hidden="true">
               {columns.map((col, i) => (
                 <td key={col} style={{ padding: '0 8px', height: 0, border: 0 }}>
-                  <div style={{ height: 0, overflow: 'hidden', visibility: 'hidden', whiteSpace: 'nowrap' }}>
+                  <div
+                    style={{
+                      height: 0,
+                      overflow: 'hidden',
+                      visibility: 'hidden',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
                     <div>{headerLabels[i]}</div>
                     <div style={{ fontWeight: 'bold' }}>{widestValues[col]}</div>
                   </div>
@@ -175,17 +195,16 @@ export const HoverDetails: React.FC<HoverDetailsProps> = ({
             {columns.map(col => {
               const isSeries = isSeriesColumn(col, columnStyles);
               return (
-                <td
-                  key={col}
-                  style={{ padding: '4px 8px' }}
-                >
+                <td key={col} style={{ padding: '4px 8px' }}>
                   {isSeries && (
-                    <div style={{
-                      width: '100%',
-                      height: '6px',
-                      backgroundColor: columnColors[col],
-                      opacity: isolatedSeries && isolatedSeries !== col ? 0.3 : 1
-                    }}></div>
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '6px',
+                        backgroundColor: columnColors[col],
+                        opacity: isolatedSeries && isolatedSeries !== col ? 0.3 : 1,
+                      }}
+                    ></div>
                   )}
                 </td>
               );
@@ -204,7 +223,7 @@ export const HoverDetails: React.FC<HoverDetailsProps> = ({
                     padding: '8px',
                     textAlign: isDate ? 'left' : undefined,
                     fontWeight: 'bold',
-                    opacity: isSeries && isolatedSeries && isolatedSeries !== col ? 0.5 : 1
+                    opacity: isSeries && isolatedSeries && isolatedSeries !== col ? 0.5 : 1,
                   }}
                 >
                   {renderCellValue(cellValue)}

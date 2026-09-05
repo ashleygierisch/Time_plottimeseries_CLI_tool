@@ -71,7 +71,10 @@ export function parseArgs(args: string[]): CLIOptions {
     if (option.name === '--headers-file') {
       if (value == null || value.trim() === '') {
         return {
-          csvPath, chartOptions, headersFile, help: false,
+          csvPath,
+          chartOptions,
+          headersFile,
+          help: false,
           error: `--headers-file expects a path`,
         };
       }
@@ -82,13 +85,33 @@ export function parseArgs(args: string[]): CLIOptions {
     const parsed = parseNumber(value);
 
     if (option.name === '--y-max') {
-      if (parsed == null) return { csvPath, chartOptions, headersFile, help: false, error: invalid('--y-max', value) };
+      if (parsed == null)
+        return {
+          csvPath,
+          chartOptions,
+          headersFile,
+          help: false,
+          error: invalid('--y-max', value),
+        };
       chartOptions.yMax = parsed;
     } else if (option.name === '--y-min') {
-      if (parsed == null) return { csvPath, chartOptions, headersFile, help: false, error: invalid('--y-min', value) };
+      if (parsed == null)
+        return {
+          csvPath,
+          chartOptions,
+          headersFile,
+          help: false,
+          error: invalid('--y-min', value),
+        };
       chartOptions.yMin = parsed;
     } else {
-      return { csvPath, chartOptions, headersFile, help: false, error: `unknown option: ${option.name}` };
+      return {
+        csvPath,
+        chartOptions,
+        headersFile,
+        help: false,
+        error: `unknown option: ${option.name}`,
+      };
     }
   }
 
