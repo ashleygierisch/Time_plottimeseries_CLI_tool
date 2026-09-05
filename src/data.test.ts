@@ -18,7 +18,7 @@ test('getCSVData prefer query parameter', async () => {
     __INITIAL_CSV__: 'csv-from-window'
   } as unknown as Window;
 
-  const loadDefault = async () => 'csv-from-fetch';
+  const loadDefault = () => Promise.resolve('csv-from-fetch');
 
   const result = await getCSVData(win, loadDefault);
   assert.strictEqual(result, TEST_CSV);
@@ -32,7 +32,7 @@ test('getCSVData fallback to window.__INITIAL_CSV__', async () => {
     __INITIAL_CSV__: 'csv-from-window'
   } as unknown as Window;
 
-  const loadDefault = async () => 'csv-from-fetch';
+  const loadDefault = () => Promise.resolve('csv-from-fetch');
 
   const result = await getCSVData(win, loadDefault);
   assert.strictEqual(result, 'csv-from-window');
@@ -45,7 +45,7 @@ test('getCSVData fallback to loadDefault', async () => {
     }
   } as unknown as Window;
 
-  const loadDefault = async () => 'csv-from-fetch';
+  const loadDefault = () => Promise.resolve('csv-from-fetch');
 
   const result = await getCSVData(win, loadDefault);
   assert.strictEqual(result, 'csv-from-fetch');

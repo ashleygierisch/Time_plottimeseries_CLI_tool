@@ -32,7 +32,7 @@ test('HoverDetails renders correctly without hovered date', async (t) => {
   const html = renderToStaticMarkup(element);
   const rendered = await format(html, { parser: 'html' });
 
-  await assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
+  assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
 });
 
 test('HoverDetails renders correctly with hovered date', async (t) => {
@@ -48,7 +48,7 @@ test('HoverDetails renders correctly with hovered date', async (t) => {
   const html = renderToStaticMarkup(element);
   const rendered = await format(html, { parser: 'html' });
 
-  await assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
+  assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
 });
 
 test('HoverDetails renders correctly with a column excluded from the plot', async (t) => {
@@ -67,7 +67,7 @@ test('HoverDetails renders correctly with a column excluded from the plot', asyn
   const html = renderToStaticMarkup(element);
   const rendered = await format(html, { parser: 'html' });
 
-  await assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
+  assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
 });
 
 test('HoverDetails sizes columns from the widest value in the data, not the hovered one', async (t) => {
@@ -87,7 +87,7 @@ test('HoverDetails sizes columns from the widest value in the data, not the hove
   const html = renderToStaticMarkup(element);
   const rendered = await format(html, { parser: 'html' });
 
-  await assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
+  assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
 });
 
 test('HoverDetails renders correctly when date column is not the first column', async (t) => {
@@ -104,5 +104,5 @@ test('HoverDetails renders correctly when date column is not the first column', 
   const html = renderToStaticMarkup(element);
   const rendered = await format(html, { parser: 'html' });
 
-  await assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
+  assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
 });

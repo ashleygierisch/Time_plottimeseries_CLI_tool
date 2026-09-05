@@ -17,11 +17,11 @@ function sanitizeTestName(name: string): string {
   return name.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
 }
 
-export async function assertSnapshot(
+export function assertSnapshot(
   t: TestContext,
   value: string,
   options: SnapshotOptions
-): Promise<void> {
+): void {
   const testName = sanitizeTestName(t.name);
   const ext = options.extension ?? '.snapshot';
   const snapshotDir = path.join(path.dirname(options.testFilePath), '__snapshots__');

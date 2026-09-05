@@ -91,7 +91,7 @@ async function start(): Promise<void> {
       }
       res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'text/plain' });
       if (ext === '.html') {
-        res.end(content + '<script>new EventSource("/esbuild").onmessage = () => location.reload()</script>');
+        res.end(content.toString('utf-8') + '<script>new EventSource("/esbuild").onmessage = () => location.reload()</script>');
       } else {
         res.end(content);
       }
@@ -102,4 +102,7 @@ async function start(): Promise<void> {
   server.listen(PORT, HOST, () => console.log(`Listening on http://localhost:${PORT}`));
 }
 
-start();
+start().catch((err: unknown) => {
+  console.error(err);
+  process.exit(1);
+});

@@ -31,7 +31,7 @@ async function renderDataTableToString(): Promise<string> {
 
 test('DataTable renders correctly', async (t) => {
   const rendered = await renderDataTableToString();
-  await assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
+  assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
 });
 
 test('DataTable renders correctly with styled columns', async (t) => {
@@ -50,7 +50,7 @@ test('DataTable renders correctly with styled columns', async (t) => {
   const html = renderToStaticMarkup(element);
   const rendered = await format(html, { parser: 'html' });
 
-  await assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
+  assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
 });
 
 test('DataTable renders correctly when date column is not the first column', async (t) => {
@@ -65,5 +65,5 @@ test('DataTable renders correctly when date column is not the first column', asy
   const html = renderToStaticMarkup(element);
   const rendered = await format(html, { parser: 'html' });
 
-  await assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
+  assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
 });

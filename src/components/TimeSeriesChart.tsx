@@ -146,8 +146,8 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     let yMax: number;
     let yMin: number;
     if (isolatedSeries) {
-      yMax = d3.max(data, d => d[isolatedSeries as string] as number) || 0;
-      yMin = d3.min(data, d => d[isolatedSeries as string] as number) || 0;
+      yMax = d3.max(data, d => d[isolatedSeries] as number) || 0;
+      yMin = d3.min(data, d => d[isolatedSeries] as number) || 0;
     } else {
       yMax = d3.max(data, d => Math.max(...plottableColumns.map(c => d[c] as number))) || 0;
       yMin = d3.min(data, d => Math.min(...plottableColumns.map(c => d[c] as number))) || 0;
@@ -165,8 +165,12 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
       .range([innerHeight, 0]);
 
     // 3. Transitions
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const t = svg.transition().duration(UPDATE_MS) as unknown as d3.Transition<any, any, any, any>;
+    // One transition shared by every update below, so they move together. The
+    // cast widens the element type: `.transition(t)` is called on selections of
+    // several different element types, and each wants a transition it can
+    // accept.
+    const t = svg.transition().duration(UPDATE_MS) as unknown as
+      d3.Transition<d3.BaseType, unknown, null, undefined>;
 
     // Major grid lines, on the same tick values the axes label.
     const yTicks = y.ticks(MAJOR_TICKS);
@@ -235,17 +239,17 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
       .attr('stroke', col => columnColors[col])
       .attr('d', pathFor)
       .each(function () {
-        const path = this as SVGPathElement;
-        const length = typeof path.getTotalLength === 'function' ? path.getTotalLength() : 0;
+        const path = d3.select(this);
+        const length = typeof this.getTotalLength === 'function' ? this.getTotalLength() : 0;
         if (!length) return;
 
         // Leaving the dash attributes behind would clip later updates, so drop
         // them however the reveal ends.
         const clearDash = () => {
-          d3.select(path).attr('stroke-dasharray', null).attr('stroke-dashoffset', null);
+          path.attr('stroke-dasharray', null).attr('stroke-dashoffset', null);
         };
 
-        d3.select(path)
+        path
           .attr('stroke-dasharray', `${length} ${length}`)
           .attr('stroke-dashoffset', length)
           .transition('draw')
