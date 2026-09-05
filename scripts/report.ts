@@ -48,7 +48,7 @@ export function renderReport(input: ReportInput): string {
   html = insertAt(
     html,
     '<!--PRODUCTION_CSP-->',
-    `<meta http-equiv="Content-Security-Policy" content="${csp}" />`
+    `<meta http-equiv="Content-Security-Policy" content="${csp}" />`,
   );
   html = insertAt(html, '<!--PRODUCTION_DATA-->', `<script>${sources.scripts[0]}</script>`);
   html = insertAt(html, '<!--PRODUCTION_STYLE-->', `<style>${input.css}</style>`);

@@ -4,10 +4,11 @@ import { describe, it } from 'node:test';
 import { inlineSources, renderReport } from './report.ts';
 import { cspHash } from './securityHeaders.ts';
 
-const template = `<html><head><!--PRODUCTION_CSP--><!--PRODUCTION_DATA--><!--PRODUCTION_STYLE-->`
-  + `<link rel="stylesheet" href="./dist/app.css"></head>`
-  + `<body><script type="module" src="./dist/app.js"></script>`
-  + `<!--PRODUCTION_SCRIPT--></body></html>`;
+const template =
+  `<html><head><!--PRODUCTION_CSP--><!--PRODUCTION_DATA--><!--PRODUCTION_STYLE-->` +
+  `<link rel="stylesheet" href="./dist/app.css"></head>` +
+  `<body><script type="module" src="./dist/app.js"></script>` +
+  `<!--PRODUCTION_SCRIPT--></body></html>`;
 
 function render(overrides: { csv?: string; js?: string; css?: string } = {}): string {
   return renderReport({

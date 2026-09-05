@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import * as d3 from 'd3';
-import { EMPTY_CSV, processCSV, spreadDuplicateDates, type ProcessedCSV } from './dataProcessing.ts';
+import {
+  EMPTY_CSV,
+  processCSV,
+  spreadDuplicateDates,
+  type ProcessedCSV,
+} from './dataProcessing.ts';
 import { TimeSeriesChart } from './components/TimeSeriesChart.tsx';
 import { HoverDetails } from './components/HoverDetails.tsx';
 import { DataTable } from './components/DataTable.tsx';
@@ -62,11 +67,13 @@ function App() {
   // anything. That is the render this is here to cause, not a cascade.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadCSV(() => getCSVData(window, async () => {
-      const response = await fetch('/data.csv');
-      if (!response.ok) throw new Error(`Failed to fetch data: ${response.statusText}`);
-      return response.text();
-    }));
+    void loadCSV(() =>
+      getCSVData(window, async () => {
+        const response = await fetch('/data.csv');
+        if (!response.ok) throw new Error(`Failed to fetch data: ${response.statusText}`);
+        return response.text();
+      }),
+    );
   }, [loadCSV]);
 
   // Apply date spreading
@@ -96,7 +103,7 @@ function App() {
 
   // Handlers
   const handleSelectSeries = (series: string) => {
-    setIsolatedSeries(prev => prev === series ? null : series);
+    setIsolatedSeries(prev => (prev === series ? null : series));
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,12 +116,14 @@ function App() {
 
   return (
     <div className="App">
-      <div style={{
-        position: isSticky ? 'sticky' : 'static',
-        top: 0,
-        zIndex: 100,
-        backgroundColor: cssVar('ground') // Ensure opacity
-      }}>
+      <div
+        style={{
+          position: isSticky ? 'sticky' : 'static',
+          top: 0,
+          zIndex: 100,
+          backgroundColor: cssVar('ground'), // Ensure opacity
+        }}
+      >
         <TimeSeriesChart
           data={displayData}
           columns={columns}

@@ -1,0 +1,21 @@
+# Build output.
+dist/
+pages-public/
+package-lock.json
+
+# Written by the tests themselves, with prettier's html parser and its own
+# defaults. Formatting them here would fight that and churn every snapshot.
+src/components/__snapshots__/
+
+# Sample data.
+public/
+
+# Prose and configuration, left in the shape their authors chose. index.html is
+# the report template, and its <!--PRODUCTION_*--> markers are matched as exact
+# strings by scripts/report.ts; the CI workflow uses an indentation prettier
+# would rewrite wholesale.
+*.md
+.agent/
+.github/
+.vscode/
+index.html

@@ -16,7 +16,7 @@ const csvPath = process.argv[2] ?? path.resolve(dirName, '..', 'public', 'data.c
 
 const scaled = scaleCSV(
   fs.readFileSync(csvPath, 'utf-8'),
-  () => Math.random() * (MAX_DIVISOR - MIN_DIVISOR) + MIN_DIVISOR
+  () => Math.random() * (MAX_DIVISOR - MIN_DIVISOR) + MIN_DIVISOR,
 );
 
 fs.writeFileSync(csvPath, scaled);

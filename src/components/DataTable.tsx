@@ -15,7 +15,13 @@ interface DataTableProps {
   columnWidths?: number[] | null;
 }
 
-export const DataTable: React.FC<DataTableProps> = ({ formattedData, columns, hoveredDate, onHover, columnWidths }) => {
+export const DataTable: React.FC<DataTableProps> = ({
+  formattedData,
+  columns,
+  hoveredDate,
+  onHover,
+  columnWidths,
+}) => {
   const tableRef = useRef<HTMLTableElement>(null);
 
   // The hover details row is this table's header, so the two only read as one
@@ -55,7 +61,7 @@ export const DataTable: React.FC<DataTableProps> = ({ formattedData, columns, ho
                     key={col}
                     style={{
                       padding: '8px',
-                      textAlign: isDate ? 'left' : undefined
+                      textAlign: isDate ? 'left' : undefined,
                     }}
                   >
                     {renderCellValue(isDate ? row.formattedDate : row[col])}

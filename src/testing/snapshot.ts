@@ -14,14 +14,13 @@ const shouldUpdateSnapshots =
   process.argv.includes('--test-update-snapshots');
 
 function sanitizeTestName(name: string): string {
-  return name.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+  return name
+    .replace(/[^a-zA-Z0-9]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
 }
 
-export function assertSnapshot(
-  t: TestContext,
-  value: string,
-  options: SnapshotOptions
-): void {
+export function assertSnapshot(t: TestContext, value: string, options: SnapshotOptions): void {
   const testName = sanitizeTestName(t.name);
   const ext = options.extension ?? '.snapshot';
   const snapshotDir = path.join(path.dirname(options.testFilePath), '__snapshots__');
@@ -43,6 +42,6 @@ export function assertSnapshot(
     value,
     expected,
     `Snapshot mismatch for "${t.name}". ` +
-    `Run with UPDATE_SNAPSHOTS=1 to update, or delete ${snapshotFile} to regenerate.`
+      `Run with UPDATE_SNAPSHOTS=1 to update, or delete ${snapshotFile} to regenerate.`,
   );
 }

@@ -26,7 +26,10 @@ describe('scaleCSV', () => {
   });
 
   it('rounds to three places rather than carrying the full quotient', () => {
-    assert.strictEqual(scaleCSV('date,a\nx,1', () => 3), 'date,a\nx,0.333');
+    assert.strictEqual(
+      scaleCSV('date,a\nx,1', () => 3),
+      'date,a\nx,0.333',
+    );
   });
 
   it('passes through anything that is not a number on its own', () => {
@@ -46,7 +49,10 @@ describe('scaleCSV', () => {
   it('is idempotent in shape: rescaling twice loses no rows', () => {
     const csv = 'date,alpha\n2023-01-01,100\n2023-01-02,200\n';
 
-    assert.strictEqual(scaleCSV(scaleCSV(csv, byTen), byTen), 'date,alpha\n2023-01-01,1\n2023-01-02,2\n');
+    assert.strictEqual(
+      scaleCSV(scaleCSV(csv, byTen), byTen),
+      'date,alpha\n2023-01-01,1\n2023-01-02,2\n',
+    );
   });
 
   it('keeps a trailing newline, and survives a file with no rows', () => {

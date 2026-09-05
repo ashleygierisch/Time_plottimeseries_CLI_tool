@@ -11,7 +11,7 @@
 export function subdivideGridPositions(
   majors: number[],
   divisions: number,
-  extent: [number, number]
+  extent: [number, number],
 ): number[] {
   if (divisions < 2) return [];
 
@@ -25,8 +25,10 @@ export function subdivideGridPositions(
   const secondLast = sorted[sorted.length - 2];
   const lastMajor = sorted[sorted.length - 1];
   if (
-    first === undefined || second === undefined ||
-    secondLast === undefined || lastMajor === undefined
+    first === undefined ||
+    second === undefined ||
+    secondLast === undefined ||
+    lastMajor === undefined
   ) {
     return [];
   }

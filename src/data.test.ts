@@ -13,9 +13,9 @@ const TEST_CSV = `date,pct_change,amount,category
 test('getCSVData prefer query parameter', async () => {
   const win = {
     location: {
-      href: `http://localhost:3000/?csv=${encodeURIComponent(TEST_CSV)}`
+      href: `http://localhost:3000/?csv=${encodeURIComponent(TEST_CSV)}`,
     },
-    __INITIAL_CSV__: 'csv-from-window'
+    __INITIAL_CSV__: 'csv-from-window',
   } as unknown as Window;
 
   const loadDefault = () => Promise.resolve('csv-from-fetch');
@@ -27,9 +27,9 @@ test('getCSVData prefer query parameter', async () => {
 test('getCSVData fallback to window.__INITIAL_CSV__', async () => {
   const win = {
     location: {
-      href: 'http://localhost:3000/'
+      href: 'http://localhost:3000/',
     },
-    __INITIAL_CSV__: 'csv-from-window'
+    __INITIAL_CSV__: 'csv-from-window',
   } as unknown as Window;
 
   const loadDefault = () => Promise.resolve('csv-from-fetch');
@@ -41,8 +41,8 @@ test('getCSVData fallback to window.__INITIAL_CSV__', async () => {
 test('getCSVData fallback to loadDefault', async () => {
   const win = {
     location: {
-      href: 'http://localhost:3000/'
-    }
+      href: 'http://localhost:3000/',
+    },
   } as unknown as Window;
 
   const loadDefault = () => Promise.resolve('csv-from-fetch');

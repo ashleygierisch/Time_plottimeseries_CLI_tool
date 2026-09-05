@@ -75,7 +75,7 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const observer = new ResizeObserver((entries) => {
+    const observer = new ResizeObserver(entries => {
       if (!entries[0]) return;
       const { width, height } = entries[0].contentRect;
       setDimensions({ width, height });
@@ -92,10 +92,12 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   // plot and the one that moves the cursor rule across it -- so they are
   // computed once here rather than inside either.
   const x = useMemo(
-    () => d3.scaleTime()
-      .domain(d3.extent(data, d => d.date) as [Date, Date])
-      .range([0, innerWidth]),
-    [data, innerWidth]
+    () =>
+      d3
+        .scaleTime()
+        .domain(d3.extent(data, d => d.date) as [Date, Date])
+        .range([0, innerWidth]),
+    [data, innerWidth],
   );
 
   const y = useMemo(() => {
@@ -139,9 +141,13 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
 
       // Plot backdrop: black at the baseline, lifting to a barely-there blue
       // toward the top of the plot area.
-      const gradient = defs.append('linearGradient')
+      const gradient = defs
+        .append('linearGradient')
         .attr('id', GRADIENT_ID)
-        .attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', 1);
+        .attr('x1', 0)
+        .attr('y1', 0)
+        .attr('x2', 0)
+        .attr('y2', 1);
       gradient.append('stop').attr('offset', '0%').attr('stop-color', THEME.plotTop);
       gradient.append('stop').attr('offset', '55%').attr('stop-color', THEME.plotMid);
       gradient.append('stop').attr('offset', '100%').attr('stop-color', THEME.plotBottom);
@@ -157,10 +163,17 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
       // letting them draw over the axes.
       defs.append('clipPath').attr('id', CLIP_ID).append('rect');
       g.append('g').attr('class', 'lines-group').attr('clip-path', `url(#${CLIP_ID})`);
-      g.append('line').attr('class', 'cursor-rule')
-        .attr('stroke', THEME.cursor).attr('stroke-width', 1).attr('stroke-dasharray', '4 4').style('opacity', 0);
-      g.append('rect').attr('class', 'hover-overlay')
-        .attr('width', innerWidth).attr('height', innerHeight).attr('fill', 'transparent');
+      g.append('line')
+        .attr('class', 'cursor-rule')
+        .attr('stroke', THEME.cursor)
+        .attr('stroke-width', 1)
+        .attr('stroke-dasharray', '4 4')
+        .style('opacity', 0);
+      g.append('rect')
+        .attr('class', 'hover-overlay')
+        .attr('width', innerWidth)
+        .attr('height', innerHeight)
+        .attr('fill', 'transparent');
     }
 
     svg.attr('width', width).attr('height', height);
@@ -170,17 +183,28 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     g.select<SVGGElement>('.axis-x').attr('transform', `translate(0,${innerHeight})`);
     g.select<SVGGElement>('.hover-overlay').attr('width', innerWidth).attr('height', innerHeight);
     g.select('.plot-background')
-      .attr('x', 0).attr('y', 0).attr('width', innerWidth).attr('height', innerHeight);
-    svg.select(`#${CLIP_ID} rect`)
-      .attr('x', 0).attr('y', 0).attr('width', innerWidth).attr('height', innerHeight);
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', innerWidth)
+      .attr('height', innerHeight);
+    svg
+      .select(`#${CLIP_ID} rect`)
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', innerWidth)
+      .attr('height', innerHeight);
 
     // 2. Transitions
     // One transition shared by every update below, so they move together. The
     // cast widens the element type: `.transition(t)` is called on selections of
     // several different element types, and each wants a transition it can
     // accept.
-    const t = svg.transition().duration(UPDATE_MS) as unknown as
-      d3.Transition<d3.BaseType, unknown, null, undefined>;
+    const t = svg.transition().duration(UPDATE_MS) as unknown as d3.Transition<
+      d3.BaseType,
+      unknown,
+      null,
+      undefined
+    >;
 
     // Major grid lines, on the same tick values the axes label.
     const yTicks = y.ticks(MAJOR_TICKS);
@@ -188,33 +212,57 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
 
     g.select<SVGGElement>('.grid-h')
       .transition(t)
-      .call(d3.axisLeft(y).tickValues(yTicks).tickSize(-innerWidth).tickFormat(() => ''))
+      .call(
+        d3
+          .axisLeft(y)
+          .tickValues(yTicks)
+          .tickSize(-innerWidth)
+          .tickFormat(() => ''),
+      )
       .call(g => g.select('.domain').remove())
-      .selectAll('line').attr('stroke', GRID_COLOR);
+      .selectAll('line')
+      .attr('stroke', GRID_COLOR);
 
     g.select<SVGGElement>('.grid-v')
       .attr('transform', `translate(0,${innerHeight})`)
       .transition(t)
-      .call(d3.axisBottom(x).tickValues(xTicks).tickSize(-innerHeight).tickFormat(() => ''))
+      .call(
+        d3
+          .axisBottom(x)
+          .tickValues(xTicks)
+          .tickSize(-innerHeight)
+          .tickFormat(() => ''),
+      )
       .call(g => g.select('.domain').remove())
-      .selectAll('line').attr('stroke', GRID_COLOR);
+      .selectAll('line')
+      .attr('stroke', GRID_COLOR);
 
     // Fine grid, subdividing the major intervals exactly so the two line up.
     const minorLines = [
-      ...subdivideGridPositions(yTicks.map(y), GRID_DIVISIONS, [0, innerHeight])
-        .map(pos => ({ x1: 0, x2: innerWidth, y1: pos, y2: pos })),
-      ...subdivideGridPositions(xTicks.map(x), GRID_DIVISIONS, [0, innerWidth])
-        .map(pos => ({ x1: pos, x2: pos, y1: 0, y2: innerHeight })),
+      ...subdivideGridPositions(yTicks.map(y), GRID_DIVISIONS, [0, innerHeight]).map(pos => ({
+        x1: 0,
+        x2: innerWidth,
+        y1: pos,
+        y2: pos,
+      })),
+      ...subdivideGridPositions(xTicks.map(x), GRID_DIVISIONS, [0, innerWidth]).map(pos => ({
+        x1: pos,
+        x2: pos,
+        y1: 0,
+        y2: innerHeight,
+      })),
     ];
 
     g.select('.grid-minor')
-      .selectAll<SVGLineElement, typeof minorLines[number]>('line')
+      .selectAll<SVGLineElement, (typeof minorLines)[number]>('line')
       .data(minorLines)
       .join('line')
       .attr('stroke', GRID_COLOR)
       .attr('shape-rendering', 'crispEdges')
-      .attr('x1', d => d.x1).attr('x2', d => d.x2)
-      .attr('y1', d => d.y1).attr('y2', d => d.y2);
+      .attr('x1', d => d.x1)
+      .attr('x2', d => d.x2)
+      .attr('y1', d => d.y1)
+      .attr('y2', d => d.y2);
 
     // Axes
     g.select<SVGGElement>('.axis-x').call(d3.axisBottom(x).tickValues(xTicks)); // X usually static unless data changes time range
@@ -224,10 +272,14 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     const lineGenerator = d3.line<DataPoint>().x(d => x(d.date));
 
     // Line for dropping to zero
-    const zeroLineGenerator = d3.line<DataPoint>().x(d => x(d.date)).y(y(0));
+    const zeroLineGenerator = d3
+      .line<DataPoint>()
+      .x(d => x(d.date))
+      .y(y(0));
 
     const linesGroup = g.select('.lines-group');
-    const lines = linesGroup.selectAll<SVGPathElement, string>('path.series-line')
+    const lines = linesGroup
+      .selectAll<SVGPathElement, string>('path.series-line')
       .data(plottableColumns, d => d);
 
     const pathFor = (col: string) => {
@@ -241,7 +293,8 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     // Enter: draw the line in its final shape, then reveal it left to right by
     // walking a full-length dash gap off the end, like a marker stroke. The
     // transition is named so the shared `t` on updates never cancels it.
-    lines.enter()
+    lines
+      .enter()
       .append('path')
       .attr('class', 'series-line')
       .attr('fill', 'none')
@@ -285,22 +338,32 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     // 4. Interactions
     // Re-bound rather than added, so the handler closes over the current data
     // and scales instead of the ones it was first drawn with.
-    g.select('.hover-overlay')
-      .on('mousemove', (event) => {
-        const [mx] = d3.pointer(event);
-        const date = x.invert(mx);
-        const index = d3.bisector((d: DataPoint) => d.date).left(data, date);
-        const d0 = data[index - 1];
-        const d1 = data[index];
-        let d = d0;
-        if (d1 && d0) {
-          d = (date.getTime() - d0.date.getTime() > d1.date.getTime() - date.getTime()) ? d1 : d0;
-        } else if (d1) {
-          d = d1;
-        }
-        if (d) onHover(d.date);
-      });
-  }, [data, plottableColumns, isolatedSeries, columnColors, onHover, dimensions, x, y, innerWidth, innerHeight]);
+    g.select('.hover-overlay').on('mousemove', event => {
+      const [mx] = d3.pointer(event);
+      const date = x.invert(mx);
+      const index = d3.bisector((d: DataPoint) => d.date).left(data, date);
+      const d0 = data[index - 1];
+      const d1 = data[index];
+      let d = d0;
+      if (d1 && d0) {
+        d = date.getTime() - d0.date.getTime() > d1.date.getTime() - date.getTime() ? d1 : d0;
+      } else if (d1) {
+        d = d1;
+      }
+      if (d) onHover(d.date);
+    });
+  }, [
+    data,
+    plottableColumns,
+    isolatedSeries,
+    columnColors,
+    onHover,
+    dimensions,
+    x,
+    y,
+    innerWidth,
+    innerHeight,
+  ]);
 
   // The cursor rule, on its own so a mouse move touches one line's geometry
   // rather than re-running the whole draw above.
@@ -318,30 +381,58 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     }
 
     rule
-      .attr('x1', xPos).attr('x2', xPos)
-      .attr('y1', 0).attr('y2', innerHeight)
+      .attr('x1', xPos)
+      .attr('x2', xPos)
+      .attr('y1', 0)
+      .attr('y2', innerHeight)
       .style('opacity', 1);
   }, [hoveredDate, x, innerWidth, innerHeight]);
 
   return (
-    <div style={{
-      position: 'relative', // Changed from internal stickiness
-      zIndex: 90,
-      background: cssVar('ground'), // Match body bg
-      borderBottom: `1px solid ${cssVar('rule')}`,
-      color: cssVar('text')
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0.5rem', gap: '1rem', alignItems: 'center' }}>
-        <label style={{ fontSize: '0.8rem', cursor: 'pointer', color: cssVar('text'), display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+    <div
+      style={{
+        position: 'relative', // Changed from internal stickiness
+        zIndex: 90,
+        background: cssVar('ground'), // Match body bg
+        borderBottom: `1px solid ${cssVar('rule')}`,
+        color: cssVar('text'),
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          padding: '0.5rem',
+          gap: '1rem',
+          alignItems: 'center',
+        }}
+      >
+        <label
+          style={{
+            fontSize: '0.8rem',
+            cursor: 'pointer',
+            color: cssVar('text'),
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.25rem',
+          }}
+        >
           <input type="checkbox" checked={isSticky} onChange={onToggleSticky} /> Sticky Plot
         </label>
-        <label style={{ fontSize: '0.8rem', cursor: 'pointer', color: cssVar('text'), display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          <input type="checkbox" checked={spreadDates} onChange={onToggleSpreadDates} /> Spread Duplicate Dates
-        </label>
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="upload-button"
+        <label
+          style={{
+            fontSize: '0.8rem',
+            cursor: 'pointer',
+            color: cssVar('text'),
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.25rem',
+          }}
         >
+          <input type="checkbox" checked={spreadDates} onChange={onToggleSpreadDates} /> Spread
+          Duplicate Dates
+        </label>
+        <button onClick={() => fileInputRef.current?.click()} className="upload-button">
           Upload CSV
         </button>
         <input

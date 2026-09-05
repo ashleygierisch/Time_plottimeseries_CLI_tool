@@ -34,8 +34,12 @@ describe('getChartOptions', () => {
   });
 
   it('accepts kebab-case and lowercase parameter names', () => {
-    assert.deepStrictEqual(getChartOptions(windowWith('http://localhost:3000/?y-max=42')), { yMax: 42 });
-    assert.deepStrictEqual(getChartOptions(windowWith('http://localhost:3000/?ymax=42')), { yMax: 42 });
+    assert.deepStrictEqual(getChartOptions(windowWith('http://localhost:3000/?y-max=42')), {
+      yMax: 42,
+    });
+    assert.deepStrictEqual(getChartOptions(windowWith('http://localhost:3000/?ymax=42')), {
+      yMax: 42,
+    });
   });
 
   it('lets query parameters win over injected options', () => {

@@ -178,24 +178,27 @@ describe('splitHeaderLine', () => {
   });
 
   it('keeps commas inside a style spec', () => {
-    assert.deepStrictEqual(
-      splitHeaderLine('date,col1{type: decimal, places: 2},col2'),
-      ['date', 'col1{type: decimal, places: 2}', 'col2']
-    );
+    assert.deepStrictEqual(splitHeaderLine('date,col1{type: decimal, places: 2},col2'), [
+      'date',
+      'col1{type: decimal, places: 2}',
+      'col2',
+    ]);
   });
 
   it('honors backslash-escaped commas inside a style spec', () => {
-    assert.deepStrictEqual(
-      splitHeaderLine("date,col1{type:'decimal'\\, places: 2},col2"),
-      ['date', "col1{type:'decimal', places: 2}", 'col2']
-    );
+    assert.deepStrictEqual(splitHeaderLine("date,col1{type:'decimal'\\, places: 2},col2"), [
+      'date',
+      "col1{type:'decimal', places: 2}",
+      'col2',
+    ]);
   });
 
   it('honors standard CSV quoting', () => {
-    assert.deepStrictEqual(
-      splitHeaderLine('date,"col1{type: decimal, places: 2}",col2'),
-      ['date', 'col1{type: decimal, places: 2}', 'col2']
-    );
+    assert.deepStrictEqual(splitHeaderLine('date,"col1{type: decimal, places: 2}",col2'), [
+      'date',
+      'col1{type: decimal, places: 2}',
+      'col2',
+    ]);
   });
 
   it('unescapes doubled quotes in a quoted field', () => {
@@ -210,7 +213,9 @@ describe('splitHeaderLine', () => {
 describe('parseColumnStyle', () => {
   it('parses each supported key', () => {
     assert.deepStrictEqual(
-      parseColumnStyle("type: 'currency', places: 3, currency: eur, color: #ff0000, label: 'Net, total', plot: false"),
+      parseColumnStyle(
+        "type: 'currency', places: 3, currency: eur, color: #ff0000, label: 'Net, total', plot: false",
+      ),
       {
         type: 'currency',
         places: 3,
@@ -218,7 +223,7 @@ describe('parseColumnStyle', () => {
         color: '#ff0000',
         label: 'Net, total',
         plot: false,
-      }
+      },
     );
   });
 
@@ -230,17 +235,20 @@ describe('parseColumnStyle', () => {
   });
 
   it('ignores unknown keys and invalid values', () => {
-    assert.deepStrictEqual(parseColumnStyle('bogus: 1, type: nonsense, places: -1, places: abc'), {});
+    assert.deepStrictEqual(
+      parseColumnStyle('bogus: 1, type: nonsense, places: -1, places: abc'),
+      {},
+    );
   });
 
   it('ignores a currency that is not a 3-letter code', () => {
-    assert.deepStrictEqual(parseColumnStyle('type: currency, currency: usdollar'), { type: 'currency' });
+    assert.deepStrictEqual(parseColumnStyle('type: currency, currency: usdollar'), {
+      type: 'currency',
+    });
     // The default currency still formats rather than throwing.
-    const formatters = analyzeColumnFormatters(
-      [{ date: new Date(), val: 1 }],
-      ['val'],
-      { val: parseColumnStyle('type: currency, currency: usdollar') }
-    );
+    const formatters = analyzeColumnFormatters([{ date: new Date(), val: 1 }], ['val'], {
+      val: parseColumnStyle('type: currency, currency: usdollar'),
+    });
     assert.strictEqual(defined(formatters['val'])(1), '$1.00');
   });
 
@@ -279,7 +287,7 @@ describe('extractColumnStyles', () => {
 
   it('strips specs from the header line', () => {
     const { csv, columnStyles } = extractColumnStyles(
-      "date,col1{type:'decimal'\\, places: 2},col2\n2026-01-01,0.7,foo"
+      "date,col1{type:'decimal'\\, places: 2},col2\n2026-01-01,0.7,foo",
     );
     assert.strictEqual(csv, 'date,col1,col2\n2026-01-01,0.7,foo');
     assert.deepStrictEqual(columnStyles, { col1: { type: 'decimal', places: 2 } });
@@ -309,7 +317,10 @@ describe('spreadDuplicateDates', () => {
   it('leaves unique dates unchanged', () => {
     const d1 = new Date('2023-01-01');
     const d2 = new Date('2023-01-02');
-    const data: DataPoint[] = [{ date: d1, val: 1 }, { date: d2, val: 2 }];
+    const data: DataPoint[] = [
+      { date: d1, val: 1 },
+      { date: d2, val: 2 },
+    ];
     const result = spreadDuplicateDates(data);
     assert.strictEqual(defined(result[0]).date.getTime(), d1.getTime());
     assert.strictEqual(defined(result[1]).date.getTime(), d2.getTime());
@@ -317,7 +328,10 @@ describe('spreadDuplicateDates', () => {
 
   it('spreads two points on the same date 12 hours apart', () => {
     const base = new Date('2023-01-01');
-    const data: DataPoint[] = [{ date: base, val: 1 }, { date: base, val: 2 }];
+    const data: DataPoint[] = [
+      { date: base, val: 1 },
+      { date: base, val: 2 },
+    ];
     const result = spreadDuplicateDates(data);
     assert.strictEqual(defined(result[0]).date.getTime(), base.getTime());
     assert.strictEqual(defined(result[1]).date.getTime(), base.getTime() + msPerDay / 2);
@@ -332,13 +346,22 @@ describe('spreadDuplicateDates', () => {
     ];
     const result = spreadDuplicateDates(data);
     assert.strictEqual(defined(result[0]).date.getTime(), base.getTime());
-    assert.strictEqual(defined(result[1]).date.getTime(), base.getTime() + Math.floor(msPerDay / 3));
-    assert.strictEqual(defined(result[2]).date.getTime(), base.getTime() + Math.floor(2 * msPerDay / 3));
+    assert.strictEqual(
+      defined(result[1]).date.getTime(),
+      base.getTime() + Math.floor(msPerDay / 3),
+    );
+    assert.strictEqual(
+      defined(result[2]).date.getTime(),
+      base.getTime() + Math.floor((2 * msPerDay) / 3),
+    );
   });
 
   it('does not mutate the original data', () => {
     const base = new Date('2023-01-01');
-    const data: DataPoint[] = [{ date: base, val: 1 }, { date: base, val: 2 }];
+    const data: DataPoint[] = [
+      { date: base, val: 1 },
+      { date: base, val: 2 },
+    ];
     spreadDuplicateDates(data);
     assert.strictEqual(defined(data[0]).date.getTime(), base.getTime());
     assert.strictEqual(defined(data[1]).date.getTime(), base.getTime());

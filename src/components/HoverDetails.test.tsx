@@ -20,7 +20,7 @@ const columnColors = {
   category: 'blue',
 };
 
-test('HoverDetails renders correctly without hovered date', async (t) => {
+test('HoverDetails renders correctly without hovered date', async t => {
   const { formattedData, columns } = processCSV(sampleCsv);
   const element = React.createElement(HoverDetails, {
     formattedData,
@@ -28,7 +28,7 @@ test('HoverDetails renders correctly without hovered date', async (t) => {
     columns,
     columnColors,
     isolatedSeries: null,
-    onSelectSeries: () => { },
+    onSelectSeries: () => {},
   });
   const html = renderToStaticMarkup(element);
   const rendered = await format(html, { parser: 'html' });
@@ -36,7 +36,7 @@ test('HoverDetails renders correctly without hovered date', async (t) => {
   assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
 });
 
-test('HoverDetails renders correctly with hovered date', async (t) => {
+test('HoverDetails renders correctly with hovered date', async t => {
   const { formattedData, columns } = processCSV(sampleCsv);
   const element = React.createElement(HoverDetails, {
     formattedData,
@@ -44,7 +44,7 @@ test('HoverDetails renders correctly with hovered date', async (t) => {
     columns,
     columnColors,
     isolatedSeries: null,
-    onSelectSeries: () => { },
+    onSelectSeries: () => {},
   });
   const html = renderToStaticMarkup(element);
   const rendered = await format(html, { parser: 'html' });
@@ -52,7 +52,7 @@ test('HoverDetails renders correctly with hovered date', async (t) => {
   assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
 });
 
-test('HoverDetails renders correctly with a column excluded from the plot', async (t) => {
+test('HoverDetails renders correctly with a column excluded from the plot', async t => {
   const csv = `date,pct_change,amount{plot: false, label: 'Amount (not plotted)'}
 2023-01-01,0.15,45.5`;
   const { formattedData, columns, columnStyles } = processCSV(csv);
@@ -62,7 +62,7 @@ test('HoverDetails renders correctly with a column excluded from the plot', asyn
     columns,
     columnColors,
     isolatedSeries: null,
-    onSelectSeries: () => { },
+    onSelectSeries: () => {},
     columnStyles,
   });
   const html = renderToStaticMarkup(element);
@@ -71,7 +71,7 @@ test('HoverDetails renders correctly with a column excluded from the plot', asyn
   assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
 });
 
-test('HoverDetails sizes columns from the widest value in the data, not the hovered one', async (t) => {
+test('HoverDetails sizes columns from the widest value in the data, not the hovered one', async t => {
   const csv = `date,amount
 2023-01-01,1
 2023-01-02,123456789
@@ -83,7 +83,7 @@ test('HoverDetails sizes columns from the widest value in the data, not the hove
     columns,
     columnColors: { amount: 'green' },
     isolatedSeries: null,
-    onSelectSeries: () => { },
+    onSelectSeries: () => {},
   });
   const html = renderToStaticMarkup(element);
   const rendered = await format(html, { parser: 'html' });
@@ -91,7 +91,7 @@ test('HoverDetails sizes columns from the widest value in the data, not the hove
   assertSnapshot(t, rendered, { testFilePath, extension: '.html' });
 });
 
-test('HoverDetails renders correctly when date column is not the first column', async (t) => {
+test('HoverDetails renders correctly when date column is not the first column', async t => {
   const csv = `val1,date,val2\n10,2023-01-01,20`;
   const { formattedData, columns } = processCSV(csv);
   const element = React.createElement(HoverDetails, {
@@ -100,7 +100,7 @@ test('HoverDetails renders correctly when date column is not the first column', 
     columns,
     columnColors: { val1: 'red', val2: 'blue' },
     isolatedSeries: null,
-    onSelectSeries: () => { },
+    onSelectSeries: () => {},
   });
   const html = renderToStaticMarkup(element);
   const rendered = await format(html, { parser: 'html' });
