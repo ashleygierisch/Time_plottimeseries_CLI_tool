@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ColumnStyles, FormattedDataPoint, formatColumnName, isSeriesColumn, LinkData } from '../dataProcessing';
+import { type ColumnStyles, type FormattedDataPoint, formatColumnName, isSeriesColumn, type LinkData } from '../dataProcessing';
 import { apportionColumnWidths } from '../columnWidths';
 
 interface HoverDetailsProps {

@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    // An optional property and a property explicitly set to `undefined` are
+    // different things, and the CLI leans on the difference: `{ yMax: undefined }`
+    // is not the same chart as `{}` once it is serialised into a report.
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    // Nothing here compiles TypeScript to JavaScript ahead of time: esbuild
+    // erases the types for the browser bundle, and node runs scripts/*.ts by
+    // stripping them. Both need every construct to be erasable, and both fail
+    // at run time rather than at build time when it is not. This turns that
+    // into a typecheck error.
+    "erasableSyntaxOnly": true,
+    // With type stripping there is no whole-program view at run time, so an
+    // import that only ever carried a type has to say so rather than being
+    // inferred away.
+    "verbatimModuleSyntax": true
+  }
+}

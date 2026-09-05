@@ -11,9 +11,9 @@ import {
   processCSV,
   spreadDuplicateDates,
   splitHeaderLine,
-  ColumnStyles,
-  DataPoint,
-  LinkData,
+  type ColumnStyles,
+  type DataPoint,
+  type LinkData,
 } from './dataProcessing.ts';
 
 describe('parseCSV', () => {

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import * as d3 from 'd3';
-import { ColumnStyles, DataPoint, isSeriesColumn } from '../dataProcessing';
-import { ChartOptions } from '../chartOptions';
+import { type ColumnStyles, type DataPoint, isSeriesColumn } from '../dataProcessing';
+import type { ChartOptions } from '../chartOptions';
 import { subdivideGridPositions } from '../gridLines';
 
 const CLIP_ID = 'plot-area-clip';
