@@ -45,7 +45,9 @@ const FORMAT_TYPES: Record<string, ColumnFormatType> = {
 };
 
 export function formatDate(date: Date): string {
-  return date.toISOString().split('T')[0];
+  // slice, not split('T')[0]: an ISO string is always 24 characters, so this
+  // is the same answer without an index that could in principle miss.
+  return date.toISOString().slice(0, 10);
 }
 
 /** Narrows a formatted cell value to the markdown-style link it may hold. */
@@ -193,7 +195,8 @@ export function parseColumnStyle(spec: string): ColumnStyle {
 export function parseColumnHeader(header: string): { name: string, style: ColumnStyle } {
   const match = header.match(/^([^{]*)\{(.*)\}\s*$/s);
   if (!match) return { name: header, style: {} };
-  return { name: match[1].trim(), style: parseColumnStyle(match[2]) };
+  const [, name = '', spec = ''] = match;
+  return { name: name.trim(), style: parseColumnStyle(spec) };
 }
 
 function escapeCSVField(field: string): string {
@@ -233,16 +236,20 @@ export function parseCSV(csvString: string): { data: DataPoint[], columns: strin
   // parsing them costs nothing but an index lookup.
   const rows = d3.csvParseRows(csv);
 
-  if (rows.length < 2) return { data: [], columns: [], columnStyles };
-
   const [columns, ...records] = rows;
+  // A file with no header, or a header and nothing under it, has no data.
+  if (columns === undefined || records.length === 0) {
+    return { data: [], columns: [], columnStyles };
+  }
+
   const dateIndex = columns.findIndex(isDateColumn);
 
   if (dateIndex === -1) return { data: [], columns, columnStyles };
 
   const data = records.map((record) => {
-    if (!record[dateIndex]) return null;
-    const date = new Date(record[dateIndex]);
+    const rawDate = record[dateIndex];
+    if (!rawDate) return null;
+    const date = new Date(rawDate);
     if (isNaN(date.getTime())) return null;
 
     const point: DataPoint = { date };
@@ -391,11 +398,9 @@ export function processCSV(csvString: string): ProcessedCSV {
         } else if (typeof val === 'string') {
           const linkMatch = val.match(/^\[(.*?)\]\((.*?)\)$/);
           if (linkMatch) {
+            const [, linkText = '', href = ''] = linkMatch;
             try {
-              formattedVal = {
-                linkText: linkMatch[1],
-                url: new URL(linkMatch[2])
-              };
+              formattedVal = { linkText, url: new URL(href) };
             } catch {
               formattedVal = val;
             }

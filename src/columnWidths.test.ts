@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
 import { apportionColumnWidths } from './columnWidths.ts';
+import { defined } from './testing/assertions.ts';
 
 const sum = (values: number[]) => values.reduce((total, value) => total + value, 0);
 
@@ -19,8 +20,10 @@ test('apportionColumnWidths', async (t) => {
 
   await t.test('keeps every column within a pixel of its measurement', () => {
     const measured = [12.7, 40.2, 8.9, 33.33, 100.01];
-    apportionColumnWidths(measured).forEach((width, i) => {
-      assert.ok(Math.abs(width - measured[i]) < 1, `${width} is not within a pixel of ${measured[i]}`);
+    const widths = apportionColumnWidths(measured);
+    measured.forEach((want, i) => {
+      const got = defined(widths[i], `width for column ${i}`);
+      assert.ok(Math.abs(got - want) < 1, `${got} is not within a pixel of ${want}`);
     });
   });
 

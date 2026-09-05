@@ -46,6 +46,7 @@ function run(command: string, args: string[]): void {
 
 function pickSandbox(): string[] | undefined {
   return SANDBOXES.find(([command, ...args]) => {
+    if (command === undefined) return false;
     const { status } = spawnSync(command, [...args, process.execPath, '-e', ''], {
       stdio: 'ignore',
     });
@@ -127,8 +128,8 @@ function checkBuildArtifacts(): void {
   if (csp == null) fail('Built index.html has no Content-Security-Policy meta tag');
 
   const inline = [
-    ...[...html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]),
-    ...[...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map(m => m[1]),
+    ...[...html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1] ?? ''),
+    ...[...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map(m => m[1] ?? ''),
   ];
   if (inline.length !== 3) {
     fail(`Expected 2 inline scripts and 1 inline style, found ${inline.length} blocks total`);
@@ -157,9 +158,8 @@ async function validate(): Promise<void> {
 
   run('npm', ['audit', '--audit-level', 'high']);
 
-  const sandbox = pickSandbox();
-  if (sandbox) {
-    const [command, ...args] = sandbox;
+  const [command, ...args] = pickSandbox() ?? [];
+  if (command !== undefined) {
     run(command, [...args, process.execPath, THIS_FILE, '--offline', '--sandboxed']);
   } else if (process.env.CI) {
     fail('No no-egress sandbox available (needs unshare, and sudo unless root).');

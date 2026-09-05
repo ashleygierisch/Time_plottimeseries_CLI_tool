@@ -236,7 +236,9 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
       .attr('class', 'series-line')
       .attr('fill', 'none')
       .attr('stroke-width', 1.5)
-      .attr('stroke', col => columnColors[col])
+      // null rather than undefined for a column with no assigned colour: d3
+      // reads that as "remove the attribute" instead of writing "undefined".
+      .attr('stroke', col => columnColors[col] ?? null)
       .attr('d', pathFor)
       .each(function () {
         const path = d3.select(this);
@@ -264,7 +266,7 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     // Update
     lines
       .transition(t)
-      .attr('stroke', col => columnColors[col]) // Ensure color updates if needed
+      .attr('stroke', col => columnColors[col] ?? null) // Ensure color updates if needed
       .attr('d', pathFor);
 
     // Exit

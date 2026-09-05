@@ -17,8 +17,12 @@ export function apportionColumnWidths(measured: number[]): number[] {
     .map((width, index) => ({ index, remainder: width - Math.floor(width) }))
     .sort((a, b) => b.remainder - a.remainder);
 
-  for (let i = 0; leftover > 0 && i < byRemainder.length; i++, leftover--) {
-    widths[byRemainder[i].index] += 1;
+  for (const { index } of byRemainder) {
+    if (leftover <= 0) break;
+    const width = widths[index];
+    if (width === undefined) continue;
+    widths[index] = width + 1;
+    leftover--;
   }
 
   return widths;

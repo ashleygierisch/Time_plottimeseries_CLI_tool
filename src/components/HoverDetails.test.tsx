@@ -5,6 +5,7 @@ import React from 'react';
 import { format } from 'prettier';
 import { HoverDetails } from './HoverDetails.tsx';
 import { processCSV } from '../dataProcessing.ts';
+import { defined } from '../testing/assertions.ts';
 import { assertSnapshot } from '../testing/snapshot.ts';
 
 const testFilePath = fileURLToPath(import.meta.url);
@@ -39,7 +40,7 @@ test('HoverDetails renders correctly with hovered date', async (t) => {
   const { formattedData, columns } = processCSV(sampleCsv);
   const element = React.createElement(HoverDetails, {
     formattedData,
-    hoveredDate: formattedData[0].date,
+    hoveredDate: defined(formattedData[0]).date,
     columns,
     columnColors,
     isolatedSeries: null,
@@ -57,7 +58,7 @@ test('HoverDetails renders correctly with a column excluded from the plot', asyn
   const { formattedData, columns, columnStyles } = processCSV(csv);
   const element = React.createElement(HoverDetails, {
     formattedData,
-    hoveredDate: formattedData[0].date,
+    hoveredDate: defined(formattedData[0]).date,
     columns,
     columnColors,
     isolatedSeries: null,
@@ -78,7 +79,7 @@ test('HoverDetails sizes columns from the widest value in the data, not the hove
   const { formattedData, columns } = processCSV(csv);
   const element = React.createElement(HoverDetails, {
     formattedData,
-    hoveredDate: formattedData[0].date,
+    hoveredDate: defined(formattedData[0]).date,
     columns,
     columnColors: { amount: 'green' },
     isolatedSeries: null,
@@ -95,7 +96,7 @@ test('HoverDetails renders correctly when date column is not the first column', 
   const { formattedData, columns } = processCSV(csv);
   const element = React.createElement(HoverDetails, {
     formattedData,
-    hoveredDate: formattedData[0].date,
+    hoveredDate: defined(formattedData[0]).date,
     columns,
     columnColors: { val1: 'red', val2: 'blue' },
     isolatedSeries: null,

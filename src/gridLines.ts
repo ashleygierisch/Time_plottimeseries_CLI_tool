@@ -13,30 +13,46 @@ export function subdivideGridPositions(
   divisions: number,
   extent: [number, number]
 ): number[] {
-  if (divisions < 2 || majors.length < 2) return [];
+  if (divisions < 2) return [];
 
   const sorted = [...majors].sort((a, b) => a - b);
+
+  // The four majors the edge extrapolation needs. Reading them up front states
+  // the "at least two majors" precondition in the one form the compiler checks
+  // too, so nothing below has to index blind.
+  const first = sorted[0];
+  const second = sorted[1];
+  const secondLast = sorted[sorted.length - 2];
+  const lastMajor = sorted[sorted.length - 1];
+  if (
+    first === undefined || second === undefined ||
+    secondLast === undefined || lastMajor === undefined
+  ) {
+    return [];
+  }
+
   const [lo, hi] = extent[0] <= extent[1] ? extent : [extent[1], extent[0]];
   const positions: number[] = [];
 
-  for (let i = 0; i < sorted.length - 1; i++) {
-    const gap = sorted[i + 1] - sorted[i];
-    if (gap <= 0) continue; // duplicate majors have nothing between them
+  sorted.forEach((from, i) => {
+    const to = sorted[i + 1];
+    if (to === undefined) return; // the last major has no gap after it
+    const gap = to - from;
+    if (gap <= 0) return; // duplicate majors have nothing between them
     for (let step = 1; step < divisions; step++) {
-      positions.push(sorted[i] + (gap * step) / divisions);
+      positions.push(from + (gap * step) / divisions);
     }
-  }
+  });
 
   // Carry the outermost step widths out to the edges of the plot area so the
   // paper does not stop short of the axes.
-  const leading = (sorted[1] - sorted[0]) / divisions;
-  for (let p = sorted[0] - leading; p >= lo && leading > 0; p -= leading) {
+  const leading = (second - first) / divisions;
+  for (let p = first - leading; p >= lo && leading > 0; p -= leading) {
     positions.push(p);
   }
 
-  const last = sorted.length - 1;
-  const trailing = (sorted[last] - sorted[last - 1]) / divisions;
-  for (let p = sorted[last] + trailing; p <= hi && trailing > 0; p += trailing) {
+  const trailing = (lastMajor - secondLast) / divisions;
+  for (let p = lastMajor + trailing; p <= hi && trailing > 0; p += trailing) {
     positions.push(p);
   }
 

@@ -1,5 +1,6 @@
 import { describe, it, test } from 'node:test';
 import assert from 'node:assert';
+import { defined } from './testing/assertions.ts';
 import {
   parseCSV,
   analyzeColumnFormatters,
@@ -24,9 +25,9 @@ describe('parseCSV', () => {
     assert.deepStrictEqual(columns, ['date', 'val1', 'val2']);
     assert.strictEqual(data.length, 2);
 
-    assert.strictEqual(data[0].date.toISOString().split('T')[0], '2023-01-01');
-    assert.strictEqual(data[0].val1, 10);
-    assert.strictEqual(data[0].val2, 20);
+    assert.strictEqual(defined(data[0]).date.toISOString().split('T')[0], '2023-01-01');
+    assert.strictEqual(defined(data[0]).val1, 10);
+    assert.strictEqual(defined(data[0]).val2, 20);
   });
 
   it('should handle date when it is not the first column', () => {
@@ -40,7 +41,7 @@ describe('parseCSV', () => {
     const { data } = parseCSV(csv);
 
     assert.strictEqual(data.length, 1);
-    assert.strictEqual(data[0].val, 20);
+    assert.strictEqual(defined(data[0]).val, 20);
   });
 
   it('should handle empty CSV', () => {
@@ -67,9 +68,9 @@ describe('parseCSV', () => {
     const { data } = parseCSV(csv);
 
     assert.strictEqual(data.length, 6);
-    assert.strictEqual(data[0].pct_change, 0.15);
-    assert.strictEqual(data[0].amount, 45.5);
-    assert.strictEqual(data[0].category, 'High');
+    assert.strictEqual(defined(data[0]).pct_change, 0.15);
+    assert.strictEqual(defined(data[0]).amount, 45.5);
+    assert.strictEqual(defined(data[0]).category, 'High');
   });
 });
 
@@ -83,7 +84,7 @@ test('analyzeColumnFormatters', async (t) => {
     ];
 
     const formatters = analyzeColumnFormatters(data, columns);
-    const fmt = formatters['pct'];
+    const fmt = defined(formatters['pct']);
 
     assert.strictEqual(fmt(0.123), '12.3%');
     assert.strictEqual(fmt(1.5), '150.0%');
@@ -99,7 +100,7 @@ test('analyzeColumnFormatters', async (t) => {
     ];
 
     const formatters = analyzeColumnFormatters(data, columns);
-    const fmt = formatters['dec'];
+    const fmt = defined(formatters['dec']);
 
     assert.strictEqual(fmt(5.543), '5.5');
     assert.strictEqual(fmt(0), '0.0');
@@ -114,7 +115,7 @@ test('analyzeColumnFormatters', async (t) => {
     ];
 
     const formatters = analyzeColumnFormatters(data, columns);
-    const fmt = formatters['int'];
+    const fmt = defined(formatters['int']);
 
     assert.strictEqual(fmt(1234.56), '1,235');
     assert.strictEqual(fmt(10.1), '10');
@@ -135,11 +136,11 @@ test('analyzeColumnFormatters', async (t) => {
     const formatters = analyzeColumnFormatters(data, columns, columnStyles);
 
     // Without a style, [-2, 2] would have been formatted as a percentage.
-    assert.strictEqual(formatters['a'](0.7), '0.70');
-    assert.strictEqual(formatters['b'](0.7), '1');
-    assert.strictEqual(formatters['c'](0.7), '70%');
-    assert.strictEqual(formatters['d'](0.7), '$0.70');
-    assert.strictEqual(formatters['e'](0.7), '0.7000');
+    assert.strictEqual(defined(formatters['a'])(0.7), '0.70');
+    assert.strictEqual(defined(formatters['b'])(0.7), '1');
+    assert.strictEqual(defined(formatters['c'])(0.7), '70%');
+    assert.strictEqual(defined(formatters['d'])(0.7), '$0.70');
+    assert.strictEqual(defined(formatters['e'])(0.7), '0.7000');
   });
 
   await t.test('falls back to inference for styles that say nothing about numbers', () => {
@@ -147,7 +148,7 @@ test('analyzeColumnFormatters', async (t) => {
     const data: DataPoint[] = [{ date: new Date(), pct: 0.5 }];
     const formatters = analyzeColumnFormatters(data, columns, { pct: { color: 'red' } });
 
-    assert.strictEqual(formatters['pct'](0.123), '12.3%');
+    assert.strictEqual(defined(formatters['pct'])(0.123), '12.3%');
   });
 });
 
@@ -240,7 +241,7 @@ test('parseColumnStyle', async (t) => {
       ['val'],
       { val: parseColumnStyle('type: currency, currency: usdollar') }
     );
-    assert.strictEqual(formatters['val'](1), '$1.00');
+    assert.strictEqual(defined(formatters['val'])(1), '$1.00');
   });
 
   await t.test('ignores entries without a value', () => {
@@ -310,16 +311,16 @@ test('spreadDuplicateDates', async (t) => {
     const d2 = new Date('2023-01-02');
     const data: DataPoint[] = [{ date: d1, val: 1 }, { date: d2, val: 2 }];
     const result = spreadDuplicateDates(data);
-    assert.strictEqual(result[0].date.getTime(), d1.getTime());
-    assert.strictEqual(result[1].date.getTime(), d2.getTime());
+    assert.strictEqual(defined(result[0]).date.getTime(), d1.getTime());
+    assert.strictEqual(defined(result[1]).date.getTime(), d2.getTime());
   });
 
   await t.test('spreads two points on the same date 12 hours apart', () => {
     const base = new Date('2023-01-01');
     const data: DataPoint[] = [{ date: base, val: 1 }, { date: base, val: 2 }];
     const result = spreadDuplicateDates(data);
-    assert.strictEqual(result[0].date.getTime(), base.getTime());
-    assert.strictEqual(result[1].date.getTime(), base.getTime() + msPerDay / 2);
+    assert.strictEqual(defined(result[0]).date.getTime(), base.getTime());
+    assert.strictEqual(defined(result[1]).date.getTime(), base.getTime() + msPerDay / 2);
   });
 
   await t.test('spreads three points on the same date 8 hours apart', () => {
@@ -330,17 +331,17 @@ test('spreadDuplicateDates', async (t) => {
       { date: base, val: 3 },
     ];
     const result = spreadDuplicateDates(data);
-    assert.strictEqual(result[0].date.getTime(), base.getTime());
-    assert.strictEqual(result[1].date.getTime(), base.getTime() + Math.floor(msPerDay / 3));
-    assert.strictEqual(result[2].date.getTime(), base.getTime() + Math.floor(2 * msPerDay / 3));
+    assert.strictEqual(defined(result[0]).date.getTime(), base.getTime());
+    assert.strictEqual(defined(result[1]).date.getTime(), base.getTime() + Math.floor(msPerDay / 3));
+    assert.strictEqual(defined(result[2]).date.getTime(), base.getTime() + Math.floor(2 * msPerDay / 3));
   });
 
   await t.test('does not mutate the original data', () => {
     const base = new Date('2023-01-01');
     const data: DataPoint[] = [{ date: base, val: 1 }, { date: base, val: 2 }];
     spreadDuplicateDates(data);
-    assert.strictEqual(data[0].date.getTime(), base.getTime());
-    assert.strictEqual(data[1].date.getTime(), base.getTime());
+    assert.strictEqual(defined(data[0]).date.getTime(), base.getTime());
+    assert.strictEqual(defined(data[1]).date.getTime(), base.getTime());
   });
 
   await t.test('handles mixed: some dates unique, some duplicated', () => {
@@ -352,9 +353,9 @@ test('spreadDuplicateDates', async (t) => {
       { date: d2, val: 3 },
     ];
     const result = spreadDuplicateDates(data);
-    assert.strictEqual(result[0].date.getTime(), d1.getTime());
-    assert.strictEqual(result[1].date.getTime(), d2.getTime());
-    assert.strictEqual(result[2].date.getTime(), d2.getTime() + msPerDay / 2);
+    assert.strictEqual(defined(result[0]).date.getTime(), d1.getTime());
+    assert.strictEqual(defined(result[1]).date.getTime(), d2.getTime());
+    assert.strictEqual(defined(result[2]).date.getTime(), d2.getTime() + msPerDay / 2);
   });
 });
 
@@ -369,22 +370,22 @@ test('processCSV', async (t) => {
     assert.deepStrictEqual(columns, ['date', 'pct_change', 'amount', 'category']);
     assert.strictEqual(formattedData.length, 2);
 
-    assert.strictEqual(formattedData[0].formattedDate, '2023-01-01');
-    assert.strictEqual(formattedData[0].pct_change, '15.0%');
-    assert.strictEqual(formattedData[0].amount, '46');
-    assert.strictEqual(formattedData[0].category, 'High');
+    assert.strictEqual(defined(formattedData[0]).formattedDate, '2023-01-01');
+    assert.strictEqual(defined(formattedData[0]).pct_change, '15.0%');
+    assert.strictEqual(defined(formattedData[0]).amount, '46');
+    assert.strictEqual(defined(formattedData[0]).category, 'High');
 
-    assert.strictEqual(formattedData[1].formattedDate, '2023-01-02');
-    assert.strictEqual(formattedData[1].pct_change, '-80.0%');
-    assert.strictEqual(formattedData[1].amount, '-99');
-    assert.strictEqual(formattedData[1].category, 'Low');
+    assert.strictEqual(defined(formattedData[1]).formattedDate, '2023-01-02');
+    assert.strictEqual(defined(formattedData[1]).pct_change, '-80.0%');
+    assert.strictEqual(defined(formattedData[1]).amount, '-99');
+    assert.strictEqual(defined(formattedData[1]).category, 'Low');
   });
 
   await t.test('handles markdown links', () => {
     const csv = `date,link\n2023-01-01,[Google](https://google.com)`;
     const { formattedData } = processCSV(csv);
 
-    const linkData = formattedData[0].link as LinkData;
+    const linkData = defined(formattedData[0]).link as LinkData;
     assert.strictEqual(linkData.linkText, 'Google');
     assert.strictEqual(linkData.url.toString(), 'https://google.com/');
   });
@@ -393,7 +394,7 @@ test('processCSV', async (t) => {
     const csv = `date,link\n2023-01-01,[Invalid](not-a-url)`;
     const { formattedData } = processCSV(csv);
 
-    assert.strictEqual(formattedData[0].link, '[Invalid](not-a-url)');
+    assert.strictEqual(defined(formattedData[0]).link, '[Invalid](not-a-url)');
   });
 
   await t.test('handles empty CSV', () => {
@@ -414,7 +415,7 @@ test('processCSV', async (t) => {
       col2: { label: 'Category' },
       col3: { plot: false },
     });
-    assert.strictEqual(formattedData[0].col1, '0.70');
-    assert.strictEqual(formattedData[0].col2, 'foo');
+    assert.strictEqual(defined(formattedData[0]).col1, '0.70');
+    assert.strictEqual(defined(formattedData[0]).col2, 'foo');
   });
 });

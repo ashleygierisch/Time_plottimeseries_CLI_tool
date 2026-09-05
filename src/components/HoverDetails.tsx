@@ -59,7 +59,8 @@ export const HoverDetails: React.FC<HoverDetailsProps> = ({
     for (const row of formattedData) {
       for (const col of columns) {
         const text = cellText(isDateColumn(col) ? row.formattedDate : row[col]);
-        if (text.length > widest[col].length) widest[col] = text;
+        const widestSoFar = widest[col] ?? EMPTY_VALUE;
+        if (text.length > widestSoFar.length) widest[col] = text;
       }
     }
     return widest;
