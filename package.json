@@ -22,16 +22,16 @@
   "type": "module",
   "dependencies": {
     "d3": "^7.9.0",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
   },
   "devDependencies": {
     "@eslint-react/eslint-plugin": "^5.18.7",
     "@eslint/js": "^10.0.1",
     "@types/d3": "^7.4.3",
     "@types/node": "^26.1.2",
-    "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@typescript-eslint/eslint-plugin": "^8.68.0",
     "@typescript-eslint/parser": "^8.68.0",
     "esbuild": "^0.28.2",
