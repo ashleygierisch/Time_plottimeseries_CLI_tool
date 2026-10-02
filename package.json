@@ -26,23 +26,23 @@
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
-    "@eslint-react/eslint-plugin": "^5.18.7",
+    "@eslint-react/eslint-plugin": "^5.21.3",
     "@eslint/js": "^10.0.1",
     "@types/d3": "^7.4.3",
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.6.3",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
-    "@typescript-eslint/eslint-plugin": "^8.68.0",
-    "@typescript-eslint/parser": "^8.68.0",
+    "@typescript-eslint/eslint-plugin": "^8.71.0",
+    "@typescript-eslint/parser": "^8.71.0",
     "esbuild": "^0.28.2",
-    "eslint": "^10.8.0",
+    "eslint": "^10.11.0",
     "eslint-plugin-react-hooks": "^7.1.1",
-    "globals": "^17.9.0",
+    "globals": "^17.12.0",
     "postject": "^1.0.0-alpha.6",
-    "prettier": "^3.9.6",
-    "scriptc": "^0.0.35",
-    "tsx": "^4.23.12",
+    "prettier": "^3.9.9",
+    "scriptc": "^0.1.7",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.68.0"
+    "typescript-eslint": "^8.71.0"
   }
 }
